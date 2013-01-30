@@ -1948,7 +1948,7 @@ NetLogo 5.0.2
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="matched-threshold?">
-      <value value="true"/>
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
