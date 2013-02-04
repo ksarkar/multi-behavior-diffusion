@@ -1192,7 +1192,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-500
+51
 1
 1
 NIL
@@ -1443,7 +1443,7 @@ SWITCH
 593
 switching-cost?
 switching-cost?
-0
+1
 1
 -1000
 
@@ -1481,7 +1481,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "ideal-all-agent-adoption-without-network-effect"
-12
+8
 
 SLIDER
 20
@@ -1507,7 +1507,7 @@ rand-seed-threshold
 rand-seed-threshold
 0
 10000
-5998
+5997
 1
 1
 NIL

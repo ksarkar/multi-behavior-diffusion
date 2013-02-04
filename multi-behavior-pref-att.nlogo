@@ -1468,7 +1468,7 @@ SWITCH
 552
 switching-cost?
 switching-cost?
-0
+1
 1
 -1000
 
