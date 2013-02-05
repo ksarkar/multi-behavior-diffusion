@@ -1484,7 +1484,7 @@ SWITCH
 593
 switching-cost?
 switching-cost?
-0
+1
 1
 -1000
 
@@ -1548,7 +1548,7 @@ rand-seed-threshold
 rand-seed-threshold
 0
 10000
-5999
+1058
 1
 1
 NIL
@@ -2399,6 +2399,67 @@ NetLogo 5.0.2
     <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
     <enumeratedValueSet variable="switching-cost?">
       <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="100"/>
+      <value value="200"/>
+      <value value="300"/>
+      <value value="400"/>
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="seed-size-vs-utilization-n-sw-c-threshold-average" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <metric>array:item active-counts 0</metric>
+    <metric>array:item active-counts 1</metric>
+    <metric>array:item active-counts 2</metric>
+    <metric>array:item num-seeds-per-behavior 0</metric>
+    <metric>array:item num-seeds-per-behavior 1</metric>
+    <metric>array:item num-seeds-per-behavior 2</metric>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="500"/>
