@@ -1232,7 +1232,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-100
+51
 1
 1
 NIL
@@ -1247,7 +1247,7 @@ rand-seed-network
 rand-seed-network
 1
 10000
-5476
+5999
 1
 1
 NIL
@@ -1532,7 +1532,7 @@ rand-seed-threshold
 rand-seed-threshold
 0
 10000
-1000
+4937
 1
 1
 NIL
@@ -1546,7 +1546,7 @@ CHOOSER
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
-0
+4
 
 INPUTBOX
 226
@@ -2261,6 +2261,52 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-network">
       <value value="5476"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="behav-distribution-n-sw-cost-network-average" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;highest cost behavior only&quot;"/>
+      <value value="&quot;lowest cost behavior only&quot;"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
