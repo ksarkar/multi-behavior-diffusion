@@ -783,6 +783,12 @@ to one-step-spread-hill-climbing-with-random-tie-breaking
    while [more-seeds-required? seeds-required] [
      let new-seedsets map [compute-optimal-seedset-one-step-spread ? (array:item seeds-required ?) (array:item seedsets ?) pop] (behav-id-list) 
      
+     foreach behav-id-list [
+       if array:item seeds-required ? > count (item ? new-seedsets) [
+         array:set seeds-required ? 0
+       ]
+     ]
+     
      let new-seeds reduce [(turtle-set ?1 ?2)] new-seedsets
      
      set pop pop with [not member? self new-seeds]
@@ -825,9 +831,14 @@ to-report compute-optimal-seedset-one-step-spread [b-id num-seeds seedset remain
     
     let newseed max-one-of remaining-pop [array:item one-step-spreads b-id]
     set new-seedset (turtle-set new-seedset newseed)
-    ask newseed [
-      set pop other pop
-      set remaining-pop other remaining-pop
+    ifelse newseed = nobody [
+      report new-seedset
+    ]
+    [
+      ask newseed [
+        set pop other pop
+        set remaining-pop other remaining-pop
+      ]
     ]
   ]
   
@@ -1403,7 +1414,7 @@ SWITCH
 487
 switching-cost?
 switching-cost?
-0
+1
 1
 -1000
 

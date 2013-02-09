@@ -773,7 +773,7 @@ to one-step-spread-hill-climbing-with-random-tie-breaking
      let new-seedsets map [compute-optimal-seedset-one-step-spread ? (array:item seeds-required ?) (array:item seedsets ?) pop] (behav-id-list) 
      
      foreach behav-id-list [
-       if array:item seeds-required ? > count (array:item seedsets ?) [
+       if array:item seeds-required ? > count (item ? new-seedsets) [
          array:set seeds-required ? 0
        ]
      ]

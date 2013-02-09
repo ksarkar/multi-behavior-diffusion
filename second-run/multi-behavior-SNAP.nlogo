@@ -783,6 +783,12 @@ to one-step-spread-hill-climbing-with-random-tie-breaking
    while [more-seeds-required? seeds-required] [
      let new-seedsets map [compute-optimal-seedset-one-step-spread ? (array:item seeds-required ?) (array:item seedsets ?) pop] (behav-id-list) 
      
+     foreach behav-id-list [
+       if array:item seeds-required ? > count (item ? new-seedsets) [
+         array:set seeds-required ? 0
+       ]
+     ]
+     
      let new-seeds reduce [(turtle-set ?1 ?2)] new-seedsets
      
      set pop pop with [not member? self new-seeds]
@@ -825,9 +831,14 @@ to-report compute-optimal-seedset-one-step-spread [b-id num-seeds seedset remain
     
     let newseed max-one-of remaining-pop [array:item one-step-spreads b-id]
     set new-seedset (turtle-set new-seedset newseed)
-    ask newseed [
-      set pop other pop
-      set remaining-pop other remaining-pop
+    ifelse newseed = nobody [
+      report new-seedset
+    ]
+    [
+      ask newseed [
+        set pop other pop
+        set remaining-pop other remaining-pop
+      ]
     ]
   ]
   
@@ -1427,7 +1438,7 @@ benefit-of-inertia
 benefit-of-inertia
 0
 1
-0.1
+0.2
 0.01
 1
 NIL
@@ -1441,7 +1452,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking"
-8
+12
 
 SLIDER
 10
@@ -1467,7 +1478,7 @@ rand-seed-threshold
 rand-seed-threshold
 0
 10000
-5993
+1000
 1
 1
 NIL
@@ -1489,7 +1500,7 @@ INPUTBOX
 419
 461
 final-ratio
-[1  2 3]
+[1 2 3]
 1
 0
 String
@@ -1926,6 +1937,49 @@ NetLogo 5.0.2
     <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="behav-distribution-n-sw-cost-bound" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="501"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="2999"/>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;highest cost behavior only&quot;"/>
+      <value value="&quot;lowest cost behavior only&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="benefit-of-inertia">
       <value value="0.1"/>
