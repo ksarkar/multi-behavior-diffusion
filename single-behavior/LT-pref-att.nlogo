@@ -629,7 +629,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "random-seed-selection" "degree-ranked-seed-selection" "immediate-spread-ranked-seed-selection" "immediate-spread-based-hill-climbing" "spread-based-hill-climbing-seed-selection"
-1
+0
 
 BUTTON
 290
@@ -657,7 +657,7 @@ num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
 10000
-500
+1000
 1
 1
 NIL
@@ -672,7 +672,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 0
 10000
-1000
+5000
 100
 1
 NIL
@@ -1061,7 +1061,7 @@ NetLogo 5.0.2
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="threshold-n=500-b=5" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="threshold-n=100-b=5" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go-bspace</go>
     <timeLimit steps="1"/>
@@ -1085,6 +1085,70 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="1234"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="threshold-n=500-b=10" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go-bspace</go>
+    <timeLimit steps="1"/>
+    <metric>average-spread</metric>
+    <metric>sd-spread</metric>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;random-seed-selection&quot;"/>
+      <value value="&quot;degree-ranked-seed-selection&quot;"/>
+      <value value="&quot;immediate-spread-ranked-seed-selection&quot;"/>
+      <value value="&quot;immediate-spread-based-hill-climbing&quot;"/>
+      <value value="&quot;spread-based-hill-climbing-seed-selection&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4321"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="1234"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="threshold-n=500-b=51" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go-bspace</go>
+    <timeLimit steps="1"/>
+    <metric>average-spread</metric>
+    <metric>sd-spread</metric>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;random-seed-selection&quot;"/>
+      <value value="&quot;degree-ranked-seed-selection&quot;"/>
+      <value value="&quot;immediate-spread-ranked-seed-selection&quot;"/>
+      <value value="&quot;immediate-spread-based-hill-climbing&quot;"/>
+      <value value="&quot;spread-based-hill-climbing-seed-selection&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4321"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-network">
       <value value="1234"/>
