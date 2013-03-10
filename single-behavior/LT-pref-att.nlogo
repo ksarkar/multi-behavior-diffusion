@@ -42,7 +42,7 @@ to setup
   set-default-shape turtles "person"
   
   random-seed 12345 + rand-seed-network
-  setup-clustered-network
+  setup-preferential-attachment-network
   
   init-turtle-variables
   
@@ -68,43 +68,92 @@ to set-coloring-variables
   set active-color magenta
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;Spatially Clustered Network;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Preferential Attachment Network;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to setup-clustered-network
-  setup-nodes
-  setup-spatially-clustered-network
-end
-
-to setup-nodes
+to setup-preferential-attachment-network
   set-default-shape turtles "person"
-  crt number-of-nodes
-  [
-    ; for visual reasons, we don't put any nodes *too* close to the edges
-    setxy (random-xcor * 0.95) (random-ycor * 0.95)
-    set color neutral-color
-    set size 1.5
+  
+  ;; make the initial network of two turtles and an edge
+  make-node nobody        ;; first node, unattached
+  make-node turtle 0
+  
+  ;; now add rest of the nodes
+  repeat number-of-nodes - 2 [
+    make-node find-partner
+    layout-preferential-attachment-network
   ]
 end
 
-to setup-spatially-clustered-network
-  let num-links (average-node-degree * number-of-nodes) / 2
-  while [count links < num-links ]
+;; used for creating a new node
+to make-node [old-node]
+  crt 1
   [
-    ask one-of turtles
+    set color neutral-color
+    if old-node != nobody
+      [ create-link-with old-node 
+        ;[ 
+        ;  set color neutral - 2 
+        ;]
+        ;; position the new node near its partner
+        move-to old-node
+        fd 8
+      ]
+  ]
+end
+
+;; This code is borrowed from Lottery Example (in the Code Examples
+;; section of the Models Library).
+;; The idea behind the code is a bit tricky to understand.
+;; Basically we take the sum of the degrees (number of connections)
+;; of the turtles, and that's how many "tickets" we have in our lottery.
+;; Then we pick a random "ticket" (a random number).  Then we step
+;; through the turtles to figure out which node holds the winning ticket.
+to-report find-partner
+  let total random-float sum [count link-neighbors] of turtles
+  let partner nobody
+  ask turtles
+  [
+    let nc count link-neighbors
+    ;; if there's no winner yet...
+    if partner = nobody
     [
-      let choice (min-one-of (other turtles with [not link-neighbor? myself])
-                   [distance myself])
-      if choice != nobody [ create-link-with choice [set color cyan] ]
+      ifelse nc > total
+        [ set partner self ]
+        [ set total total - nc ]
     ]
   ]
-  ; make the network look a little prettier
-  ;repeat 10
-  ;[
-   ; layout-spring turtles links 0.3 (world-width / (sqrt number-of-nodes)) 1
-  ;]
+  report partner
 end
+
+;; lays out the preferential attachment network in aesthetic way
+to layout-preferential-attachment-network
+  ;; the number 3 here is arbitrary; more repetitions slows down the
+  ;; model, but too few gives poor layouts
+  repeat 3 [
+    ;; the more turtles we have to fit into the same amount of space,
+    ;; the smaller the inputs to layout-spring we'll need to use
+    let factor sqrt count turtles
+    ;; numbers here are arbitrarily chosen for pleasing appearance
+    layout-spring turtles links (1 / factor) (7 / factor) (1 / factor)
+    display  ;; for smooth animation
+  ]
+  ;; don't bump the edges of the world
+  let x-offset max [xcor] of turtles + min [xcor] of turtles
+  let y-offset max [ycor] of turtles + min [ycor] of turtles
+  ;; big jumps look funny, so only adjust a little each time
+  set x-offset limit-magnitude x-offset 0.1
+  set y-offset limit-magnitude y-offset 0.1
+  ask turtles [ setxy (xcor - x-offset / 2) (ycor - y-offset / 2) ]
+end
+
+to-report limit-magnitude [number limit]
+  if number > limit [ report limit ]
+  if number < (- limit) [ report (- limit) ]
+  report number
+end
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -409,33 +458,6 @@ to go-bspace
   set sd-spread sd-spread / num-samples-for-spread-estimation
   set sd-spread sqrt (sd-spread - (average-spread * average-spread))
 end
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;A small template for abstraction;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-to-report template [newthing]
-  let pattern 5
-  report task [? + pattern + newthing]
-end
-
-to-report task1 [arg]
-  let new 1
-  let my-copy template new
-  report (runresult my-copy arg)
-end
-
-to loop-test
-  set roundActiveCount 5
-  while [roundActiveCount > 0] [
-    go-stub-2
-  ]
-  print "done"
-end
-
-to go-stub-2
-  print roundActiveCount
-  set roundActiveCount roundActiveCount - 1
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 508
@@ -480,10 +502,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-15
-180
-187
-213
+14
+139
+186
+172
 number-of-seeds
 number-of-seeds
 1
@@ -495,30 +517,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-381
-190
-414
+17
+340
+189
+373
 rand-seed-network
 rand-seed-network
 1
 10000
 1234
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-15
-92
-187
-125
-average-node-degree
-average-node-degree
-1
-number-of-nodes - 1
-10
 1
 1
 NIL
@@ -580,30 +587,30 @@ Network Specification
 1
 
 TEXTBOX
-16
-143
-201
-163
+15
+102
+200
+122
 Specify Number of Seeds
 16
 0.0
 1
 
 TEXTBOX
-19
-348
-191
-373
+18
+307
+190
+332
 Control Randomization
 16
 0.0
 1
 
 SLIDER
-19
-430
-191
-463
+18
+389
+190
+422
 rand-seed-threshold
 rand-seed-threshold
 0
@@ -615,10 +622,10 @@ NIL
 HORIZONTAL
 
 CHOOSER
-14
-231
-188
-276
+13
+190
+187
+235
 seed-selection-algorithm
 seed-selection-algorithm
 "random-seed-selection" "degree-ranked-seed-selection" "immediate-spread-ranked-seed-selection" "immediate-spread-based-hill-climbing" "spread-based-hill-climbing-seed-selection"
@@ -642,10 +649,10 @@ NIL
 1
 
 SLIDER
-14
-289
-187
-322
+13
+248
+186
+281
 num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
@@ -1060,9 +1067,6 @@ NetLogo 5.0.2
     <timeLimit steps="1"/>
     <metric>average-spread</metric>
     <metric>sd-spread</metric>
-    <enumeratedValueSet variable="average-node-degree">
-      <value value="10"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;random-seed-selection&quot;"/>
       <value value="&quot;degree-ranked-seed-selection&quot;"/>
@@ -1070,23 +1074,23 @@ NetLogo 5.0.2
       <value value="&quot;immediate-spread-based-hill-climbing&quot;"/>
       <value value="&quot;spread-based-hill-climbing-seed-selection&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-seeds">
-      <value value="5"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-threshold">
       <value value="4321"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-seeds">
+      <value value="5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="100"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-samples-for-spread-estimation">
-      <value value="5000"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-network">
       <value value="1234"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
-      <value value="1000"/>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>

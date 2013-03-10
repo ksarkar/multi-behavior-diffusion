@@ -42,7 +42,7 @@ to setup
   set-default-shape turtles "person"
   
   random-seed 12345 + rand-seed-network
-  setup-clustered-network
+  setup-small-world-network
   
   init-turtle-variables
   
@@ -68,43 +68,89 @@ to set-coloring-variables
   set active-color magenta
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;Spatially Clustered Network;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Small World Network;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to setup-clustered-network
-  setup-nodes
-  setup-spatially-clustered-network
+to setup-small-world-network
+  make-turtles
+  wire-them
+  rewire-all
 end
 
-to setup-nodes
+to make-turtles
   set-default-shape turtles "person"
-  crt number-of-nodes
-  [
-    ; for visual reasons, we don't put any nodes *too* close to the edges
-    setxy (random-xcor * 0.95) (random-ycor * 0.95)
+  crt number-of-nodes [ 
     set color neutral-color
     set size 1.5
   ]
+  ;; arrange them in a circle in order by who number
+  ;layout-circle (sort turtles) max-pxcor - 1
 end
 
-to setup-spatially-clustered-network
-  let num-links (average-node-degree * number-of-nodes) / 2
-  while [count links < num-links ]
+to wire-them
+  ;; iterate over the turtles
+  let n 0
+  while [n < count turtles]
   [
-    ask one-of turtles
+    ;; make edges with the next two neighbors
+    ;; this makes a lattice with average degree of 4
+    make-edge turtle n
+              turtle ((n + 1) mod count turtles)
+    make-edge turtle n
+              turtle ((n + 2) mod count turtles)
+    set n n + 1
+  ]
+end
+
+;; connects the two turtles
+to make-edge [node1 node2]
+  ask node1 [ create-link-with node2  
+    ;[
+    ;  set color neutral - 2
+    ;] 
+  ]
+end
+
+to rewire-all
+
+  ;; make sure num-turtles is setup correctly; if not run setup first
+  if count turtles != number-of-nodes [
+    setup-small-world-network
+  ]
+  
+  ask links [
+
+    let rewired? false
+    ;; whether to rewire it or not?
+    if (random-float 1) < rewiring-probability
     [
-      let choice (min-one-of (other turtles with [not link-neighbor? myself])
-                   [distance myself])
-      if choice != nobody [ create-link-with choice [set color cyan] ]
+      ;; "a" remains the same
+      let node1 end1
+      ;; if "a" is not connected to everybody
+      if [ count link-neighbors ] of end1 < (count turtles - 1)
+      [
+        ;; find a node distinct from node1 and not already a neighbor of node1
+        let node2 one-of turtles with [ (self != node1) and (not link-neighbor? node1) ]
+        ;; wire the new edge
+        ask node1 [ create-link-with node2 
+          ;[ 
+          ;  set color neutral - 2
+          ;] 
+        ]
+
+        set rewired? true
+      ]
+    ]
+    ;; remove the old edge
+    if (rewired?)
+    [
+      die
     ]
   ]
-  ; make the network look a little prettier
-  ;repeat 10
-  ;[
-   ; layout-spring turtles links 0.3 (world-width / (sqrt number-of-nodes)) 1
-  ;]
+
 end
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -409,33 +455,6 @@ to go-bspace
   set sd-spread sd-spread / num-samples-for-spread-estimation
   set sd-spread sqrt (sd-spread - (average-spread * average-spread))
 end
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;A small template for abstraction;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-to-report template [newthing]
-  let pattern 5
-  report task [? + pattern + newthing]
-end
-
-to-report task1 [arg]
-  let new 1
-  let my-copy template new
-  report (runresult my-copy arg)
-end
-
-to loop-test
-  set roundActiveCount 5
-  while [roundActiveCount > 0] [
-    go-stub-2
-  ]
-  print "done"
-end
-
-to go-stub-2
-  print roundActiveCount
-  set roundActiveCount roundActiveCount - 1
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 508
@@ -480,10 +499,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-15
-180
-187
-213
+14
+182
+186
+215
 number-of-seeds
 number-of-seeds
 1
@@ -495,30 +514,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-381
-190
-414
+17
+383
+189
+416
 rand-seed-network
 rand-seed-network
 1
 10000
 1234
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-15
-92
-187
-125
-average-node-degree
-average-node-degree
-1
-number-of-nodes - 1
-10
 1
 1
 NIL
@@ -580,30 +584,30 @@ Network Specification
 1
 
 TEXTBOX
-16
-143
-201
-163
+15
+145
+200
+165
 Specify Number of Seeds
 16
 0.0
 1
 
 TEXTBOX
-19
-348
-191
-373
+18
+350
+190
+375
 Control Randomization
 16
 0.0
 1
 
 SLIDER
-19
-430
-191
-463
+16
+431
+188
+464
 rand-seed-threshold
 rand-seed-threshold
 0
@@ -615,14 +619,14 @@ NIL
 HORIZONTAL
 
 CHOOSER
-14
-231
-188
-276
+13
+233
+187
+278
 seed-selection-algorithm
 seed-selection-algorithm
 "random-seed-selection" "degree-ranked-seed-selection" "immediate-spread-ranked-seed-selection" "immediate-spread-based-hill-climbing" "spread-based-hill-climbing-seed-selection"
-1
+0
 
 BUTTON
 290
@@ -642,15 +646,15 @@ NIL
 1
 
 SLIDER
-14
-289
-187
-322
+13
+291
+186
+324
 num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
 10000
-500
+100
 1
 1
 NIL
@@ -665,7 +669,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 0
 10000
-1000
+5000
 100
 1
 NIL
@@ -692,6 +696,21 @@ sd-spread
 2
 1
 11
+
+SLIDER
+13
+94
+185
+127
+rewiring-probability
+rewiring-probability
+0
+1.0
+0.2
+0.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1054,14 +1073,32 @@ NetLogo 5.0.2
       <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="threshold-n=500-b=5" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="threshold-n=100-b=5" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go-bspace</go>
     <timeLimit steps="1"/>
     <metric>average-spread</metric>
     <metric>sd-spread</metric>
-    <enumeratedValueSet variable="average-node-degree">
-      <value value="10"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4321"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-seeds">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="1234"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;random-seed-selection&quot;"/>
@@ -1069,24 +1106,6 @@ NetLogo 5.0.2
       <value value="&quot;immediate-spread-ranked-seed-selection&quot;"/>
       <value value="&quot;immediate-spread-based-hill-climbing&quot;"/>
       <value value="&quot;spread-based-hill-climbing-seed-selection&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-seeds">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="4321"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-samples-for-spread-estimation">
-      <value value="5000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="1234"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
-      <value value="1000"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
