@@ -34,6 +34,7 @@ turtles-own
   consider?  ;; boolean array for indicating whether a behavior will be considered for adoption or not
   ;; turtle variable required for seed selection algorithms
   one-step-spreads ;; vector containing the expected one-step adoption of the turtle
+  spreads ;; vectors containing the spread for each behavior of this node
 
 ]
 
@@ -64,9 +65,6 @@ to setup
   random-seed 123456 + rand-seed-resource
   set-resource
   
-  random-seed 1234567 + rand-seed-threshold
-  set-thresholds
-  
   set-actives
   set-weight-sums
   set-payoffs
@@ -74,6 +72,9 @@ to setup
   
   random-seed 12345 + rand-seed-network
   select-seeds
+  
+  random-seed 1234567 + rand-seed-threshold
+  set-thresholds
   
   setup-indicators
   
@@ -864,6 +865,156 @@ to reset-one-step-spreads
     foreach behav-id-list [
       array:set one-step-spreads ? 0
     ]
+  ]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Spread Based Hill Climbing;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to spread-based-hill-climbing-with-random-tie-breaking
+  init-spreads
+  let seeds-required array:from-list array:to-list num-seeds-per-behavior
+  let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
+  
+   while [more-seeds-required? seeds-required] [
+     let new-seedsets map [compute-greedy-spread-based-seedset ? (array:item seeds-required ?) (array:item seedsets ?) pop] (behav-id-list) 
+     
+     foreach behav-id-list [
+       if array:item seeds-required ? > count (item ? new-seedsets) [
+         array:set seeds-required ? 0
+       ]
+     ]
+     
+     let new-seeds reduce [(turtle-set ?1 ?2)] new-seedsets
+     
+     set pop pop with [not member? self new-seeds]
+     
+     ask new-seeds [
+      let candidates filter [member? self (item ? new-seedsets)] (behav-id-list)
+      let winner item (random length candidates) candidates
+      ;array:set actives? winner true
+      array:set seeds-required winner ((array:item seeds-required winner) - 1)
+      array:set seedsets winner (turtle-set array:item seedsets winner self)
+      ;; with resource nudging
+      if array:item costs winner > resource [
+        set resource array:item costs winner
+      ]
+      ;set-color
+    ]   
+   ] 
+   
+  ;; actives? field and color is messed-up so set it up again
+  set-actives
+  set-neutral-color
+  
+  let seed-sets seedsets
+  set-seeds-active seedsets
+  
+end  
+
+to init-spreads
+  ask turtles [
+    set spreads array:from-list all-zeros
+  ]
+end
+
+to set-neutral-color
+  ask turtles [
+    set color neutral
+  ]
+end
+
+to set-seeds-active [seedsets]
+  (foreach behav-id-list seedsets [
+      ask ?2 [
+        array:set actives? ?1 true
+      ]
+  ])
+end
+
+to-report compute-greedy-spread-based-seedset [b-id num-seeds seedset remaining-pop]
+  let pop remaining-pop
+  
+  let new-seedset (turtle-set nobody)
+  
+  repeat num-seeds [
+    compute-spread-for-pop b-id pop (turtle-set seedset new-seedset)   
+    let newseed max-one-of pop [array:item spreads b-id]
+    set new-seedset (turtle-set new-seedset newseed)
+    ifelse newseed = nobody [
+      report new-seedset
+    ]
+    [
+      ask newseed [
+        set pop other pop
+      ]
+    ]
+  ]
+  
+  report new-seedset    
+end
+
+to compute-spread-for-pop [b-id pop seedset]
+  foreach sort pop [
+    let spread-est estimate-spread b-id (turtle-set seedset ?)
+    ask ? [
+      array:set spreads b-id spread-est  
+    ]
+  ]
+end
+
+to-report estimate-spread [b-id seedset]
+  let rand-seed 4567
+  let spread-est 0
+  let num-sim-for-spread-based-seed-selection 50
+
+  repeat num-sim-for-spread-based-seed-selection [
+    set spread-est spread-est + simulate-model b-id seedset rand-seed
+    set rand-seed rand-seed + 1
+  ]
+  report spread-est / num-sim-for-spread-based-seed-selection
+end
+
+to-report simulate-model [b-id seedset rand-seed]
+  mini-setup b-id seedset rand-seed
+  while [not no-new-adoption?] [
+    mini-go
+  ] 
+  report count turtles with [array:item actives? b-id]
+end
+
+to mini-setup [b-id seedset rand-seed]
+  set-actives
+  set-neutral-color
+  set-active b-id seedset
+  random-seed 123456 + rand-seed
+  set-thresholds
+  setup-indicators
+  
+  reset-ticks
+end
+  
+to mini-go
+  reset-roundActiveCounts
+  reset-weight-sums
+  reset-consider
+  reset-payoffs
+  
+  propagate-influence
+  make-adoption-decision
+  
+  update-indicators
+  
+  tick
+end
+
+to set-active [b-id seedset]
+  ask seedset [
+    array:set actives? b-id true
+  set-color
   ]
 end
   
