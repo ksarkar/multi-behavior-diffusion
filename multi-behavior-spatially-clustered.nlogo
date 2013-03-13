@@ -22,11 +22,25 @@ globals [
   base
   step
   scaling
+  
+  ;;stores the seed sets for go-bspace
+  seed-sets
+  
+  ;; go-bspace statistics
+  total-part-mean
+  total-part-sd
+  total-adopt-mean
+  total-adopt-sd
+  act-counts-mean
+  act-counts-sd
+  util-mean
+  util-sd
 ]
 
 turtles-own
 [
   resource   ;; total resource available to this agent for behavior adoption 
+  resource-backup ;; backs up the resource value of each agent while running the spread based seedselection simulations
   thresholds ;; thresholds of adoption for each possible behavior
   actives?   ;; whether this agent is active or not for the particular behavior
   weight-sums ;; used to sum up influence weight from active neighbors
@@ -302,11 +316,14 @@ to select-seeds
   ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-with-random-tie-breaking" [
     one-step-spread-hill-climbing-with-random-tie-breaking
   ][
+  ifelse seed-selection-algorithm = "spread-based-hill-climbing-with-random-tie-breaking" [
+    spread-based-hill-climbing-with-random-tie-breaking
+  ][
   ifelse seed-selection-algorithm = "ideal-all-agent-adoption-without-network-effect" [
     ideal-all-agent-adoption-without-network-effect
   ][
   user-message "Specify the seed selection algorithm"
-  ]]]]]]]]]]]]]]
+  ]]]]]]]]]]]]]]]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -875,6 +892,7 @@ end
 
 to spread-based-hill-climbing-with-random-tie-breaking
   init-spreads
+  backup-resource
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
@@ -898,19 +916,20 @@ to spread-based-hill-climbing-with-random-tie-breaking
       ;array:set actives? winner true
       array:set seeds-required winner ((array:item seeds-required winner) - 1)
       array:set seedsets winner (turtle-set array:item seedsets winner self)
-      ;; with resource nudging
-      if array:item costs winner > resource [
-        set resource array:item costs winner
-      ]
+      ;; with resource nudging ; Consider doing the top up here vs in set-seeds-active
+      ;if array:item costs winner > resource [
+       ; set resource array:item costs winner
+      ;]
       ;set-color
     ]   
    ] 
    
-  ;; actives? field and color is messed-up so set it up again
+  ;; actives? field, color and resource is messed-up so set it up again
   set-actives
   set-neutral-color
+  restore-resource
   
-  let seed-sets seedsets
+  set seed-sets seedsets
   set-seeds-active seedsets
   
 end  
@@ -921,6 +940,18 @@ to init-spreads
   ]
 end
 
+to backup-resource
+  ask turtles [
+    set resource-backup resource
+  ]
+end
+
+to restore-resource
+  ask turtles [
+    set resource resource-backup
+  ]
+end
+
 to set-neutral-color
   ask turtles [
     set color neutral
@@ -928,9 +959,13 @@ to set-neutral-color
 end
 
 to set-seeds-active [seedsets]
-  (foreach behav-id-list seedsets [
+  (foreach behav-id-list array:to-list seedsets [
       ask ?2 [
         array:set actives? ?1 true
+        set-color
+        if array:item costs ?1 > resource [
+          set resource array:item costs ?1
+        ]
       ]
   ])
 end
@@ -969,7 +1004,7 @@ end
 to-report estimate-spread [b-id seedset]
   let rand-seed 4567
   let spread-est 0
-  let num-sim-for-spread-based-seed-selection 50
+  ;let num-sim-for-spread-based-seed-selection 50
 
   repeat num-sim-for-spread-based-seed-selection [
     set spread-est spread-est + simulate-model b-id seedset rand-seed
@@ -980,8 +1015,11 @@ end
 
 to-report simulate-model [b-id seedset rand-seed]
   mini-setup b-id seedset rand-seed
-  while [not no-new-adoption?] [
+  ;let max-step 100
+  let step-count 0
+  while [(not no-new-adoption?) and (step-count < max-step)] [
     mini-go
+    set step-count step-count + 1
   ] 
   report count turtles with [array:item actives? b-id]
 end
@@ -989,8 +1027,9 @@ end
 to mini-setup [b-id seedset rand-seed]
   set-actives
   set-neutral-color
+  restore-resource
   set-active b-id seedset
-  random-seed 123456 + rand-seed
+  random-seed 1234567 + rand-seed
   set-thresholds
   setup-indicators
   
@@ -1014,7 +1053,96 @@ end
 to set-active [b-id seedset]
   ask seedset [
     array:set actives? b-id true
-  set-color
+    set-color
+    if array:item costs b-id > resource [
+      set resource array:item costs b-id
+    ]
+  ]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Code for avoiding behaviorSpace;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to go-bspace
+  ;set average-spread 0
+  ;set sd-spread 0
+  setup-stats
+  let rand-seed rand-seed-threshold
+  ;let num-samples-for-spread-estimation 1000
+  repeat num-samples-for-spread-estimation [
+    mock-setup rand-seed
+    set rand-seed rand-seed + 1
+    let step-count 0
+    while [(not no-new-adoption?) and (step-count < max-step)] [
+      mini-go
+      set step-count step-count + 1
+    ] 
+    ;let spread-est count turtles with [active?]
+    ;set average-spread average-spread + spread-est
+    ;set sd-spread sd-spread + (spread-est * spread-est)
+    update-stats
+  ]
+  ;set average-spread average-spread / num-samples-for-spread-estimation
+  ;set sd-spread sd-spread / num-samples-for-spread-estimation
+  ;set sd-spread sqrt (sd-spread - (average-spread * average-spread))
+  finalize-stats num-samples-for-spread-estimation
+end
+
+to mock-setup [rand-seed]
+  set-actives
+  set-neutral-color
+  ;restore-resource
+  set-seeds-active seed-sets
+  random-seed 1234567 + rand-seed
+  set-thresholds
+  setup-indicators
+  
+  reset-ticks
+end
+
+to setup-stats
+  set total-part-mean 0
+  set total-part-sd 0
+  set total-adopt-mean 0
+  set total-adopt-sd 0
+  set util-mean 0
+  set util-sd 0
+  set act-counts-mean array:from-list all-zeros
+  set act-counts-sd array:from-list all-zeros
+end
+  
+to update-stats
+  set total-part-mean total-part-mean + total-active-count
+  set total-part-sd total-part-sd + (total-active-count * total-active-count)
+  set total-adopt-mean total-adopt-mean + total-unique-active-count
+  set total-adopt-sd total-adopt-sd + (total-unique-active-count * total-unique-active-count)
+  set util-mean util-mean + utilization
+  set util-sd util-sd + (utilization * utilization)
+  foreach behav-id-list [
+    array:set act-counts-mean ? (array:item act-counts-mean ?) + (array:item active-counts ?)
+    array:set act-counts-sd ? (array:item act-counts-sd ?) + (array:item active-counts ?) * (array:item active-counts ?)
+  ]
+end 
+
+to finalize-stats [n]
+  set total-part-mean total-part-mean / n
+  set total-part-sd total-part-sd / n
+  set total-part-sd sqrt (total-part-sd - (total-part-mean * total-part-mean))
+  
+  set total-adopt-mean total-adopt-mean / n
+  set total-adopt-sd total-adopt-sd / n
+  set total-adopt-sd sqrt (total-adopt-sd - (total-adopt-mean * total-adopt-mean))
+  
+  set util-mean util-mean / n
+  set util-sd util-sd / n
+  set util-sd sqrt (util-sd - (util-mean * util-mean))
+  
+  foreach behav-id-list [
+    array:set act-counts-mean ? (array:item act-counts-mean ?) / n
+    array:set act-counts-sd ? (array:item act-counts-sd ?) / n
+    array:set act-counts-sd ? sqrt ((array:item act-counts-sd ?) - (array:item act-counts-mean ?) * (array:item act-counts-mean ?))
   ]
 end
   
@@ -1265,17 +1393,17 @@ end
 
 ;; turtle procedure
 to set-color
-;  set color 0
-;  let num 0
-;  foreach behav-id-list [
-;    if array:item actives? ? [
-;      set color color + (base + ? * step)
-;      set num num + 1
-;    ]
-;  ]
-;  if num > 1 [
-;    set color color + scaling
-;  ]
+  set color 0
+  let num 0
+  foreach behav-id-list [
+    if array:item actives? ? [
+      set color color + (base + ? * step)
+      set num num + 1
+    ]
+  ]
+  if num > 1 [
+    set color color + scaling
+  ]
 end
   
 
@@ -1328,7 +1456,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-500
+50
 1
 1
 NIL
@@ -1343,7 +1471,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-51
+6
 1
 1
 NIL
@@ -1373,17 +1501,17 @@ average-node-degree
 average-node-degree
 1
 number-of-nodes - 1
-10
+5
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-314
-83
-377
-116
+310
+16
+373
+49
 NIL
 setup
 NIL
@@ -1397,10 +1525,10 @@ NIL
 1
 
 BUTTON
-315
-134
-378
-167
+311
+67
+374
+100
 NIL
 go
 T
@@ -1631,8 +1759,8 @@ CHOOSER
 486
 seed-selection-algorithm
 seed-selection-algorithm
-"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "ideal-all-agent-adoption-without-network-effect"
-12
+"ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-with-random-tie-breaking"
+14
 
 SLIDER
 20
@@ -1672,7 +1800,7 @@ CHOOSER
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
-5
+0
 
 INPUTBOX
 226
@@ -1684,6 +1812,68 @@ final-ratio
 1
 0
 String
+
+SLIDER
+227
+470
+413
+503
+num-sim-for-spread-based-seed-selection
+num-sim-for-spread-based-seed-selection
+1
+10000
+50
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+227
+520
+414
+553
+max-step
+max-step
+1
+500
+50
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+228
+120
+474
+153
+num-samples-for-spread-estimation
+num-samples-for-spread-estimation
+1
+10000
+500
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+298
+164
+387
+197
+NIL
+go-bspace
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
