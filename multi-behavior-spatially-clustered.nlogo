@@ -49,7 +49,6 @@ turtles-own
   ;; turtle variable required for seed selection algorithms
   one-step-spreads ;; vector containing the expected one-step adoption of the turtle
   spreads ;; vectors containing the spread for each behavior of this node
-
 ]
 
 links-own
@@ -1456,7 +1455,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-50
+500
 1
 1
 NIL
@@ -1471,7 +1470,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-6
+51
 1
 1
 NIL
@@ -1501,7 +1500,7 @@ average-node-degree
 average-node-degree
 1
 number-of-nodes - 1
-5
+10
 1
 1
 NIL
@@ -1822,7 +1821,7 @@ num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
 10000
-50
+1000
 1
 1
 NIL
@@ -1844,15 +1843,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-228
-120
-474
-153
+242
+116
+452
+149
 num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-500
+5000
 1
 1
 NIL
@@ -3168,6 +3167,77 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-costs">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="greedy-approx-seed-selection" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go-bspace</go>
+    <timeLimit steps="1"/>
+    <metric>total-part-mean</metric>
+    <metric>total-part-sd</metric>
+    <metric>total-adopt-mean</metric>
+    <metric>total-adopt-sd</metric>
+    <metric>util-mean</metric>
+    <metric>util-sd</metric>
+    <metric>array:item act-counts-mean 0</metric>
+    <metric>array:item act-counts-sd 0</metric>
+    <metric>array:item act-counts-mean 1</metric>
+    <metric>array:item act-counts-sd 1</metric>
+    <metric>array:item act-counts-mean 2</metric>
+    <metric>array:item act-counts-sd 2</metric>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[1 3 2]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="average-node-degree">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;spread-based-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
