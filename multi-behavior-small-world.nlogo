@@ -810,7 +810,7 @@ to one-step-spread-ranked-with-random-tie-breaking
     set pop pop with [not member? self seeds]
     
     ask seeds [
-      let candidates filter [member? self (item ? seedsets)] (behav-id-list)
+      let candidates filter [member? self (item ? new-seedsets)] (behav-id-list)
       let winner item (random length candidates) candidates
       array:set actives? winner true
       array:set seeds-required winner ((array:item seeds-required winner) - 1)
@@ -1794,7 +1794,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-with-random-tie-breaking"
-13
+12
 
 SLIDER
 20

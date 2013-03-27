@@ -798,21 +798,23 @@ to one-step-spread-ranked-with-random-tie-breaking
   
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
   
   while [more-seeds-required? seeds-required] [
     ;let seedsets map [max-n-of (array:item seeds-required ?) (pop with [resource >= array:item costs ?]) [array:item one-step-spreads ?]] (behav-id-list)
     ;; with resource nudging
-    let seedsets map [max-n-of (array:item seeds-required ?) pop [array:item one-step-spreads ?]] (behav-id-list) 
+    let new-seedsets map [max-n-of (array:item seeds-required ?) pop [array:item one-step-spreads ?]] (behav-id-list) 
     
-    let seeds reduce [(turtle-set ?1 ?2)] seedsets
+    let seeds reduce [(turtle-set ?1 ?2)] new-seedsets
     
     set pop pop with [not member? self seeds]
     
     ask seeds [
-      let candidates filter [member? self (item ? seedsets)] (behav-id-list)
+      let candidates filter [member? self (item ? new-seedsets)] (behav-id-list)
       let winner item (random length candidates) candidates
       array:set actives? winner true
       array:set seeds-required winner ((array:item seeds-required winner) - 1)
+      array:set seedsets winner (turtle-set array:item seedsets winner self)
       ;; with resource nudging
       if array:item costs winner > resource [
         set resource array:item costs winner
@@ -820,6 +822,7 @@ to one-step-spread-ranked-with-random-tie-breaking
       set-color
     ] 
   ] 
+  set seed-sets seedsets
 end
 
 to one-step-spread-hill-climbing-with-random-tie-breaking
@@ -852,7 +855,8 @@ to one-step-spread-hill-climbing-with-random-tie-breaking
       ]
       set-color
     ]   
-   ]  
+   ]
+   set seed-sets seedsets  
 end
 
 to-report compute-optimal-seedset-one-step-spread [b-id num-seeds seedset remaining-pop]
@@ -1495,7 +1499,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-500
+100
 1
 1
 NIL
@@ -1510,7 +1514,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-51
+10
 1
 1
 NIL
@@ -1784,7 +1788,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking"
-14
+12
 
 SLIDER
 19
@@ -1824,7 +1828,7 @@ CHOOSER
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
-0
+4
 
 INPUTBOX
 238
