@@ -798,13 +798,14 @@ to one-step-spread-ranked-with-random-tie-breaking
   
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
   
   while [more-seeds-required? seeds-required] [
     ;let seedsets map [max-n-of (array:item seeds-required ?) (pop with [resource >= array:item costs ?]) [array:item one-step-spreads ?]] (behav-id-list)
     ;; with resource nudging
-    let seedsets map [max-n-of (array:item seeds-required ?) pop [array:item one-step-spreads ?]] (behav-id-list) 
+    let new-seedsets map [max-n-of (array:item seeds-required ?) pop [array:item one-step-spreads ?]] (behav-id-list) 
     
-    let seeds reduce [(turtle-set ?1 ?2)] seedsets
+    let seeds reduce [(turtle-set ?1 ?2)] new-seedsets
     
     set pop pop with [not member? self seeds]
     
@@ -813,6 +814,7 @@ to one-step-spread-ranked-with-random-tie-breaking
       let winner item (random length candidates) candidates
       array:set actives? winner true
       array:set seeds-required winner ((array:item seeds-required winner) - 1)
+      array:set seedsets winner (turtle-set array:item seedsets winner self)
       ;; with resource nudging
       if array:item costs winner > resource [
         set resource array:item costs winner
@@ -820,6 +822,7 @@ to one-step-spread-ranked-with-random-tie-breaking
       set-color
     ] 
   ] 
+  set seed-sets seedsets
 end
 
 to one-step-spread-hill-climbing-with-random-tie-breaking
@@ -852,7 +855,8 @@ to one-step-spread-hill-climbing-with-random-tie-breaking
       ]
       set-color
     ]   
-   ]  
+   ]
+   set seed-sets seedsets  
 end
 
 to-report compute-optimal-seedset-one-step-spread [b-id num-seeds seedset remaining-pop]
@@ -1105,11 +1109,8 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to go-bspace
-  ;set average-spread 0
-  ;set sd-spread 0
   setup-stats
   let rand-seed rand-seed-threshold
-  ;let num-samples-for-spread-estimation 1000
   repeat num-samples-for-spread-estimation [
     mock-setup rand-seed
     set rand-seed rand-seed + 1
@@ -1118,14 +1119,8 @@ to go-bspace
       mini-go
       set step-count step-count + 1
     ] 
-    ;let spread-est count turtles with [active?]
-    ;set average-spread average-spread + spread-est
-    ;set sd-spread sd-spread + (spread-est * spread-est)
     update-stats
   ]
-  ;set average-spread average-spread / num-samples-for-spread-estimation
-  ;set sd-spread sd-spread / num-samples-for-spread-estimation
-  ;set sd-spread sqrt (sd-spread - (average-spread * average-spread))
   finalize-stats num-samples-for-spread-estimation
 end
 
@@ -1495,7 +1490,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-500
+100
 1
 1
 NIL
@@ -1510,7 +1505,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-51
+10
 1
 1
 NIL
@@ -1799,7 +1794,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-with-random-tie-breaking"
-14
+13
 
 SLIDER
 20
@@ -1839,7 +1834,7 @@ CHOOSER
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
-0
+4
 
 INPUTBOX
 258
