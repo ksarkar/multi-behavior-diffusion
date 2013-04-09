@@ -1474,7 +1474,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-51
+10
 1
 1
 NIL
