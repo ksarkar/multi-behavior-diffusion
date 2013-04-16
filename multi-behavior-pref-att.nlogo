@@ -1288,15 +1288,18 @@ end
 to finalize-stats [n]
   set total-part-mean total-part-mean / n
   set total-part-sd total-part-sd / n
-  set total-part-sd sqrt (total-part-sd - (total-part-mean * total-part-mean))
+  if total-part-sd > (total-part-mean * total-part-mean)
+  [set total-part-sd sqrt (total-part-sd - (total-part-mean * total-part-mean))]
   
   set total-adopt-mean total-adopt-mean / n
   set total-adopt-sd total-adopt-sd / n
-  set total-adopt-sd sqrt (total-adopt-sd - (total-adopt-mean * total-adopt-mean))
+  if total-adopt-sd > (total-adopt-mean * total-adopt-mean)
+  [set total-adopt-sd sqrt (total-adopt-sd - (total-adopt-mean * total-adopt-mean))]
   
   set util-mean util-mean / n
   set util-sd util-sd / n
-  set util-sd sqrt (util-sd - (util-mean * util-mean))
+  if util-sd > (util-mean * util-mean)
+  [set util-sd sqrt (util-sd - (util-mean * util-mean))]
   
   foreach behav-id-list [
     array:set act-counts-mean ? (array:item act-counts-mean ?) / n
@@ -1615,7 +1618,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-100
+500
 1
 1
 NIL
@@ -1630,7 +1633,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-10
+50
 1
 1
 NIL
@@ -1904,7 +1907,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed"
-14
+12
 
 SLIDER
 19
@@ -1944,7 +1947,7 @@ CHOOSER
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
-4
+0
 
 INPUTBOX
 238
@@ -1966,7 +1969,7 @@ num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
 10000
-1000
+100
 1
 1
 NIL
@@ -2018,6 +2021,28 @@ NIL
 NIL
 NIL
 1
+
+MONITOR
+276
+611
+377
+656
+NIL
+total-part-mean
+2
+1
+11
+
+MONITOR
+277
+670
+360
+715
+NIL
+total-part-sd
+2
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -3136,6 +3161,55 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;spread-based-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="seed-selection-heu-comp-n-sw-cost-thresh-av-test" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <metric>array:item active-counts 0</metric>
+    <metric>array:item active-counts 1</metric>
+    <metric>array:item active-counts 2</metric>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-ranked-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
