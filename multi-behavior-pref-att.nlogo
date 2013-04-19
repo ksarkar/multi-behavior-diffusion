@@ -17,7 +17,7 @@ globals [
   
   num-seeds-per-behavior ;; vector for storing number of seeds per behavior
   
-  ;; coloring variables ;;
+  ;;coloring variables ;;
   neutral
   base
   step
@@ -35,6 +35,9 @@ globals [
   act-counts-sd
   util-mean
   util-sd
+  
+  ;;re-setup task to be run by mini-setup-1
+  reinit-turtle-var-task
 ]
 
 turtles-own
@@ -362,11 +365,14 @@ to select-seeds
   ifelse seed-selection-algorithm = "spread-based-hill-climbing-incremental-one-behav-per-seed" [
     spread-based-hill-climbing-incremental-one-behav-per-seed
   ][
+  ifelse seed-selection-algorithm = "spread-based-hill-climbing-incremental" [
+    spread-based-hill-climbing-incremental
+  ][
   ifelse seed-selection-algorithm = "ideal-all-agent-adoption-without-network-effect" [
     ideal-all-agent-adoption-without-network-effect
   ][
   user-message "Specify the seed selection algorithm"
-  ]]]]]]]]]]]]]]]]
+  ]]]]]]]]]]]]]]]]]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -937,9 +943,64 @@ end
 ;;;Spread Based Hill Climbing;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+to spread-based-hill-climbing-incremental
+  set-spread
+  set reinit-turtle-var-task task [mini-setup-1-many-behav-per-seed]
+  
+  let seeds-required array:from-list array:to-list num-seeds-per-behavior
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
+  
+  while [more-seeds-required? seeds-required] [
+    let new-candidates map [compute-best-candidate-for-spread-based-inc ? (array:item seeds-required ?) seedsets] (behav-id-list)
+    
+    ;; to handle boundary cases
+    (foreach behav-id-list new-candidates [
+        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
+          array:set seeds-required ?1 0
+        ]
+    ])
+    
+    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
+    
+    let winner-position position (max spread-values) spread-values
+    let winner item 0 (item winner-position new-candidates)
+    
+    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
+    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
+  ]
+  
+  ;; actives? field, color and resource is messed-up so set it up again
+  set-actives
+  set-neutral-color
+  
+  set seed-sets seedsets
+  set-seeds-active seedsets    
+end  
+
+to mini-setup-1-many-behav-per-seed
+  set-actives
+  set-neutral-color
+end
+
+to-report compute-best-candidate-for-spread-based-inc [behav-id num-seeds-req seedsets]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  let pop turtles with [(not member? self (array:item seedsets behav-id)) and ((resource - used-resource) >= array:item costs behav-id)]
+  
+  compute-spread-for-pop-1 behav-id seedsets pop
+  let best-candidate max-one-of pop [spread]
+  report (list best-candidate ([spread] of best-candidate))
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 to spread-based-hill-climbing-incremental-one-behav-per-seed
   set-spread
   backup-resources
+  set reinit-turtle-var-task task [mini-setup-1-single-behav-per-seed]
+  
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
@@ -1024,10 +1085,14 @@ to simulate-model-1 [b-id new-agent seedsets rand-seed]
   ] 
 end
 
-to mini-setup-1 [b-id new-agent seedsets rand-seed]
+to mini-setup-1-single-behav-per-seed
   set-actives
   set-neutral-color
   restore-resources
+end
+
+to mini-setup-1 [b-id new-agent seedsets rand-seed]
+  run reinit-turtle-var-task
   
   set-seeds-active seedsets
   ask new-agent [
@@ -1252,7 +1317,6 @@ end
 to mock-setup [rand-seed]
   set-actives
   set-neutral-color
-  ;restore-resource
   set-seeds-active seed-sets
   random-seed 1234567 + rand-seed
   set-thresholds
@@ -1288,18 +1352,30 @@ end
 to finalize-stats [n]
   set total-part-mean total-part-mean / n
   set total-part-sd total-part-sd / n
-  if total-part-sd > (total-part-mean * total-part-mean)
-  [set total-part-sd sqrt (total-part-sd - (total-part-mean * total-part-mean))]
+  ifelse total-part-sd > (total-part-mean * total-part-mean) [
+    set total-part-sd sqrt (total-part-sd - (total-part-mean * total-part-mean))
+  ]
+  [
+    set total-part-sd 0
+  ]
   
   set total-adopt-mean total-adopt-mean / n
   set total-adopt-sd total-adopt-sd / n
-  if total-adopt-sd > (total-adopt-mean * total-adopt-mean)
-  [set total-adopt-sd sqrt (total-adopt-sd - (total-adopt-mean * total-adopt-mean))]
+  ifelse total-adopt-sd > (total-adopt-mean * total-adopt-mean) [
+    set total-adopt-sd sqrt (total-adopt-sd - (total-adopt-mean * total-adopt-mean))
+  ]
+  [
+    set total-adopt-sd 0
+  ]
   
   set util-mean util-mean / n
   set util-sd util-sd / n
-  if util-sd > (util-mean * util-mean)
-  [set util-sd sqrt (util-sd - (util-mean * util-mean))]
+  ifelse util-sd > (util-mean * util-mean) [
+    set util-sd sqrt (util-sd - (util-mean * util-mean))
+  ]
+  [
+    set util-sd 0
+  ]
   
   foreach behav-id-list [
     array:set act-counts-mean ? (array:item act-counts-mean ?) / n
@@ -1618,7 +1694,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-500
+50
 1
 1
 NIL
@@ -1633,7 +1709,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-50
+5
 1
 1
 NIL
@@ -1906,8 +1982,8 @@ CHOOSER
 445
 seed-selection-algorithm
 seed-selection-algorithm
-"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed"
-12
+"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed" "spread-based-hill-climbing-incremental"
+16
 
 SLIDER
 19
