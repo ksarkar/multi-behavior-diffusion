@@ -999,15 +999,13 @@ to compute-prob [prob-behav-list]
   ]  
   let opt knapsack-decide
   
-  foreach behav-list [
-    if member? ? opt [
-      ask link-neighbors [
-        if array:item actives? ? [
-          set one-step-spread-temp one-step-spread-temp + prob
-        ]
-      ]
+  foreach opt [
+    let num-influencers count link-neighbors with [array:item actives? ?]
+    ask link-neighbors with [array:item actives? ?] [
+      set one-step-spread-temp one-step-spread-temp + (prob / num-influencers)
     ]
-  ]  
+  ]
+  
 end
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2166,7 +2164,7 @@ SWITCH
 514
 matched-threshold?
 matched-threshold?
-1
+0
 1
 -1000
 
@@ -2193,7 +2191,7 @@ CHOOSER
 seed-selection-algorithm
 seed-selection-algorithm
 "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "one-step-spread-hill-climbing-incremental-one-behav-per-seed" "one-step-spread-hill-climbing-incremental" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed" "spread-based-hill-climbing-incremental"
-14
+13
 
 SLIDER
 19
@@ -2255,7 +2253,7 @@ num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
 10000
-100
+200
 1
 1
 NIL
@@ -2285,7 +2283,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-1000
+500
 1
 1
 NIL
@@ -2329,6 +2327,23 @@ total-part-sd
 2
 1
 11
+
+BUTTON
+409
+38
+489
+71
+run-expt
+setup\ngo-bspace\nshow seed-selection-algorithm\nshow total-part-mean\nshow total-part-sd\nshow total-adopt-mean\nshow total-adopt-sd\nshow act-counts-mean\nshow act-counts-sd\nshow util-mean\nshow util-sd
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -3496,6 +3511,79 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="comp-with-greedy-th-av-matched-thresh" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go-bspace</go>
+    <timeLimit steps="1"/>
+    <metric>total-part-mean</metric>
+    <metric>total-part-sd</metric>
+    <metric>total-adopt-mean</metric>
+    <metric>total-adopt-sd</metric>
+    <metric>util-mean</metric>
+    <metric>util-sd</metric>
+    <metric>array:item act-counts-mean 0</metric>
+    <metric>array:item act-counts-sd 0</metric>
+    <metric>array:item act-counts-mean 1</metric>
+    <metric>array:item act-counts-sd 1</metric>
+    <metric>array:item act-counts-mean 2</metric>
+    <metric>array:item act-counts-sd 2</metric>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;spread-based-hill-climbing-incremental-one-behav-per-seed&quot;"/>
+      <value value="&quot;spread-based-hill-climbing-incremental&quot;"/>
+      <value value="&quot;one-step-spread-ranked-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-hill-climbing-incremental-one-behav-per-seed&quot;"/>
+      <value value="&quot;one-step-spread-hill-climbing-incremental&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
