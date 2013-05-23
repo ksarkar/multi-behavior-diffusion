@@ -38,6 +38,8 @@ globals [
   
   ;;re-setup task to be run by mini-setup-1
   reinit-turtle-var-task
+  ;;polymorphic task pointer for computing one step adoption probability
+  compute-one-step-adopt-prob-task
 ]
 
 turtles-own
@@ -361,11 +363,17 @@ to select-seeds
   ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-with-random-tie-breaking" [
     one-step-spread-hill-climbing-with-random-tie-breaking
   ][
-  ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-incremental-one-behav-per-seed" [
-    one-step-spread-hill-climbing-incremental-one-behav-per-seed
+  ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh" [
+    one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh
   ][
-  ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-incremental" [
-    one-step-spread-hill-climbing-incremental
+  ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-incremental-matched-thresh" [
+    one-step-spread-hill-climbing-incremental-matched-thresh
+  ][
+  ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-incremental-diff-thresh" [
+    one-step-spread-hill-climbing-incremental-diff-thresh
+  ][
+  ifelse seed-selection-algorithm = "one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh" [
+    one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh
   ][
   ifelse seed-selection-algorithm = "spread-based-hill-climbing-with-random-tie-breaking" [
     spread-based-hill-climbing-with-random-tie-breaking
@@ -380,7 +388,7 @@ to select-seeds
     ideal-all-agent-adoption-without-network-effect
   ][
   user-message "Specify the seed selection algorithm"
-  ]]]]]]]]]]]]]]]]]]]
+  ]]]]]]]]]]]]]]]]]]]]]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -810,9 +818,182 @@ end
 ;;;Expected one step adoption;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to one-step-spread-hill-climbing-incremental
+;;;Different Thresholds;;;
+
+to one-step-spread-hill-climbing-incremental-diff-thresh
   set-one-step-spread
   backup-resources
+  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-diff-thresh]
+  let seeds-required array:from-list array:to-list num-seeds-per-behavior
+  let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
+  
+  while [more-seeds-required? seeds-required] [
+    let new-candidates map [best-seed-for-behav-by-heu-1 ? (array:item seeds-required ?) seedsets] (behav-id-list)
+    
+    ;; to handle boundary cases
+    (foreach behav-id-list new-candidates [
+        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
+          array:set seeds-required ?1 0
+        ]
+    ])
+    
+    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
+    
+    let winner-position position (max spread-values) spread-values
+    let winner item 0 (item winner-position new-candidates)
+    
+    ask winner [
+      set pop other pop
+    ]
+    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
+    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
+  ]
+  
+  ;; actives? field, color and resource is messed-up so set it up again
+  set-actives
+  set-neutral-color
+  restore-resources
+  
+  set seed-sets seedsets
+  set-seeds-active seedsets  
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh
+  set-one-step-spread
+  backup-resources
+  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-diff-thresh]
+  let seeds-required array:from-list array:to-list num-seeds-per-behavior
+  let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
+  
+  while [more-seeds-required? seeds-required] [
+    let new-candidates map [best-seed-for-behav-by-heu ? (array:item seeds-required ?) seedsets pop] (behav-id-list)
+    
+    ;; to handle boundary cases
+    (foreach behav-id-list new-candidates [
+        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
+          array:set seeds-required ?1 0
+        ]
+    ])
+    
+    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
+    
+    let winner-position position (max spread-values) spread-values
+    let winner item 0 (item winner-position new-candidates)
+    
+    ask winner [
+      set pop other pop
+    ]
+    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
+    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
+  ]
+  
+  ;; actives? field, color and resource is messed-up so set it up again
+  set-actives
+  set-neutral-color
+  restore-resources
+  
+  set seed-sets seedsets
+  set-seeds-active seedsets  
+end
+
+;; turtle procedure
+to compute-one-step-adopt-prob-diff-thresh
+  let weight-behav-list filter [not empty? ?] (map [ifelse-value (?1 > 0) [list ?1 ?2] [[]]] (array:to-list weight-sums) behav-id-list)
+  ifelse not empty? weight-behav-list [
+    process-influenced-turtles-diff-thresh weight-behav-list
+  ]
+  [
+    process-isolated-turtles
+  ]
+end
+
+;; turtle procedure
+to process-influenced-turtles-diff-thresh [weight-behav-list]
+  let num-behavs length weight-behav-list 
+  let num-combs (2 ^ num-behavs - 1)
+  let choice 1
+  repeat num-combs [
+    compute-prob-for-comb choice num-behavs weight-behav-list
+    set choice choice + 1
+  ]
+  ;; for the case when none of the other behaviors will be considered
+  let rem-prob reduce * map [1 - item 0 ?] weight-behav-list
+  foreach behav-id-list [
+    if array:item actives? ? [
+      set one-step-spread-temp one-step-spread-temp + rem-prob
+    ]
+  ]
+end  
+  
+;; turtle procedure
+to compute-prob-for-comb [comb num-behavs weight-behav-list]
+  let comb-bit-list bit-list comb num-behavs
+  
+  set payoffs array:from-list all-zeros
+  calculate-payoffs
+  
+  foreach behav-id-list [
+      array:set consider? ? (array:item actives? ?)   ;; previously adopted behaviors are automatically considered
+      ;array:set consider? ? false ; only behaviors crossing the threshold are considered
+    ]
+  
+  let prob 1
+  let behav-list []
+  (foreach comb-bit-list weight-behav-list [
+    if-else ?1 = 1 [ 
+      array:set consider? (item 1 ?2) true
+      ;set prob prob * array:item weight-sums (item 1 ?2)
+      set prob prob * (item 0 ?2)
+      set behav-list sentence behav-list (item 1 ?2)
+    ]
+    [
+      set prob prob * (1 - (item 0 ?2))
+    ]
+  ])  
+  
+  let opt knapsack-decide
+  
+  ;foreach opt [
+  ;  if member? ? behav-list [
+  ;    let num-influencers count link-neighbors with [array:item actives? ?]
+  ;    ask link-neighbors with [array:item actives? ?] [
+  ;      set one-step-spread-temp one-step-spread-temp + (prob / num-influencers)
+  ;    ]
+  ;  ]
+  ;]
+  
+  set one-step-spread-temp one-step-spread-temp + (length opt * prob)
+  
+end
+
+to-report bit-list [dec-number num-bits]
+  let bin-number dec-to-bin-rec dec-number
+  let pad-length (num-bits - length bin-number)
+  report sentence (n-values pad-length [0]) bin-number
+end
+
+to-report dec-to-bin-rec [dec-number]
+  if-else dec-number = 1 [
+    report (list 1)
+  ]
+  [
+    let rem dec-number mod 2
+    report sentence (dec-to-bin-rec floor (dec-number / 2)) rem
+  ]
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;Matched Threshold;;;
+
+to one-step-spread-hill-climbing-incremental-matched-thresh
+  set-one-step-spread
+  backup-resources
+  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-matched-thresh]
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
@@ -862,9 +1043,10 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to one-step-spread-hill-climbing-incremental-one-behav-per-seed
+to one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh
   set-one-step-spread
   backup-resources
+  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-matched-thresh]
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
@@ -916,6 +1098,8 @@ to-report best-seed-for-behav-by-heu [behav-id num-seeds-req seedsets pop]
   report (list best-candidate ([one-step-spread] of best-candidate))
 end
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 to compute-one-step-spread [b-id seedsets pop]
   foreach sort pop [
     let one-step-spread-est estimate-one-step-spread b-id ? seedsets 
@@ -931,10 +1115,10 @@ to-report estimate-one-step-spread [b-id new-agent seedsets]
   restore-resources
   reset-weight-sums
   setup-seedset b-id new-agent seedsets
-  let seeds reduce [(turtle-set ?1 ?2)] array:to-list seedsets
-  set seeds (turtle-set seeds new-agent)
+  ;let seeds reduce [(turtle-set ?1 ?2)] array:to-list seedsets
+  ;set seeds (turtle-set seeds new-agent)
   compute-one-step-spread-for-new-seed-set
-  report sum [one-step-spread-temp] of seeds
+  report sum [one-step-spread-temp] of turtles
 end
 
 to setup-seedset [b-id new-agent seedsets]
@@ -958,18 +1142,38 @@ to compute-one-step-spread-for-new-seed-set
   propagate-influence
   
   ask turtles [
-    compute-one-step-adopt-prob
+    run compute-one-step-adopt-prob-task
   ]
 end
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; turtle procedure
-to compute-one-step-adopt-prob
+to compute-one-step-adopt-prob-matched-thresh
   let weight-behav-list filter [not empty? ?] (map [ifelse-value (?1 > 0) [list ?1 ?2] [[]]] (array:to-list weight-sums) behav-id-list)
-  if not empty? weight-behav-list [
-    set weight-behav-list sort-by [ifelse-value (first ?1 > first ?2) [true] [false]] weight-behav-list
-    let prob-behav-list reduce combine-weight-behav-list (map [ifelse-value (?1 = 0) [(list ?2)] [?2]] (n-values length weight-behav-list [?]) weight-behav-list)
-    set prob-behav-list (map [sentence (first ?1 - first ?2) (but-first ?1)] prob-behav-list (sentence [[0 0]] but-last prob-behav-list))
-    foreach prob-behav-list compute-prob
+  ifelse not empty? weight-behav-list [
+    process-influenced-turtles weight-behav-list
+  ]
+  [
+    process-isolated-turtles
+  ]
+end
+
+to process-influenced-turtles [weight-behav-list]
+  ;; create probability-contending-behaviors-list
+  set weight-behav-list sort-by [ifelse-value (first ?1 > first ?2) [true] [false]] weight-behav-list
+  let prob-behav-list reduce combine-weight-behav-list (map [ifelse-value (?1 = 0) [(list ?2)] [?2]] (n-values length weight-behav-list [?]) weight-behav-list)
+  set prob-behav-list (map [sentence (first ?1 - first ?2) (but-first ?1)] prob-behav-list (sentence [[0 0]] but-last prob-behav-list))
+  ;; process the prob-behav-list 
+  foreach prob-behav-list compute-prob
+  ;; process the high threshold case
+  let highest-weight (first item 0 weight-behav-list)
+  let rem-prob 1 - highest-weight
+  foreach behav-id-list [
+    if array:item actives? ? [
+      set one-step-spread-temp one-step-spread-temp + rem-prob
+    ]
   ]
 end
 
@@ -997,15 +1201,19 @@ to compute-prob [prob-behav-list]
   foreach behav-list [
     array:set consider? ? true
   ]  
-  let opt knapsack-decide
-  
-  foreach opt [
-    let num-influencers count link-neighbors with [array:item actives? ?]
-    ask link-neighbors with [array:item actives? ?] [
-      set one-step-spread-temp one-step-spread-temp + (prob / num-influencers)
+  let opt knapsack-decide  
+  set one-step-spread-temp one-step-spread-temp + (prob * (length opt))
+end
+
+;; turtle procedure
+;; rationale: if it is isolated and it's a seed, then 
+;; it will definitely retain its behaviors in the next epoch
+to process-isolated-turtles
+  foreach behav-id-list [
+    if array:item actives? ? [
+      set one-step-spread-temp one-step-spread-temp + 1
     ]
   ]
-  
 end
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1902,7 +2110,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-100
+500
 1
 1
 NIL
@@ -1917,7 +2125,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-10
+50
 1
 1
 NIL
@@ -2164,7 +2372,7 @@ SWITCH
 514
 matched-threshold?
 matched-threshold?
-0
+1
 1
 -1000
 
@@ -2186,12 +2394,12 @@ HORIZONTAL
 CHOOSER
 20
 399
-211
+223
 444
 seed-selection-algorithm
 seed-selection-algorithm
-"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "one-step-spread-hill-climbing-incremental-one-behav-per-seed" "one-step-spread-hill-climbing-incremental" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed" "spread-based-hill-climbing-incremental"
-13
+"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh" "one-step-spread-hill-climbing-incremental-diff-thresh" "one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh" "one-step-spread-hill-climbing-incremental-matched-thresh" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed" "spread-based-hill-climbing-incremental"
+19
 
 SLIDER
 19
@@ -2283,7 +2491,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-500
+5000
 1
 1
 NIL
