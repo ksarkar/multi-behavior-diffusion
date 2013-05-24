@@ -1,0 +1,126 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Parameter Initialization;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+globals [
+  costs  ;; costs of each of the behaviors
+  utilities ;; intrinsic benefits from each of the behaviors
+  behav-id-list ;; list of behavior ids
+  all-zeros ;; a list of length num-behaviors containing zeros
+]
+
+links-own
+[
+  end1-weight ;; influence weight exerted by the end2 on end1
+  end2-weight ;; vice versa
+]
+
+turtles-own
+[
+  resource   ;; total resource available to this agent for behavior adoption 
+  resource-backup ;; backs up the resource value of each agent while running the spread based seedselection simulations
+  thresholds ;; thresholds of adoption for each possible behavior
+  actives?   ;; whether this agent is active or not for the particular behavior
+  weight-sums ;; used to sum up influence weight from active neighbors
+  payoffs    ;; payoff from each of the the behaviors
+  consider?  ;; boolean array for indicating whether a behavior will be considered for adoption or not
+]
+
+to set-behaviors
+  ;set costs array:from-list n-values num-behaviors [random-float 1]
+  ;set utilities array:from-list n-values num-behaviors [random-float 1]
+  
+  set costs read-from-string behavior-costs
+  ifelse is-list? costs [
+    set costs array:from-list costs
+  ]
+  [
+    user-message "Input behaivor costs as a list i.e. within []"
+    stop
+  ]
+  
+  set utilities read-from-string behavior-utilities
+  ifelse is-list? utilities [
+    set utilities array:from-list utilities
+  ]
+  [
+    user-message "Input behavior utilities as a list i.e. within []"
+    stop
+  ]
+  
+  set behav-id-list n-values num-behaviors [?]
+  set all-zeros n-values num-behaviors [0]
+end
+
+;; sets edge weights such that sum of incoming edge weights equal to 1,
+;; and each incoming edge for an agent has same weight
+to set-edge-weights
+  ask turtles [
+    if count my-links != 0 [
+      let weight 1.0 / count my-links
+      ask my-links [
+        set-weight myself weight
+      ]
+    ]
+  ]
+end
+
+;; link procedure
+to set-weight [node weight]
+  ifelse end1 = node [
+    set end1-weight weight
+  ]
+  [
+    set end2-weight weight
+  ]
+end 
+
+;; set individual resources for each agent
+to set-resource
+  ask turtles [
+    set resource random-float 1
+  ]
+end
+
+;; set individual active states for each agent
+to set-actives
+  ask turtles [
+    set actives? array:from-list n-values num-behaviors [false]
+  ]
+end
+   
+;; set agent thresholds before every run 
+to set-thresholds 
+  ifelse matched-threshold? [
+    ask turtles [
+      let thresh random-float 1
+      set thresholds array:from-list n-values num-behaviors [thresh]
+    ]
+  ]
+  [   
+    ask turtles [
+      set thresholds  array:from-list n-values num-behaviors [random-float 1]
+    ]
+  ]
+end
+
+; set weight-sum for the behaviors to zero
+to set-weight-sums
+  ask turtles [
+    set weight-sums array:from-list all-zeros
+  ]
+end
+
+; set agent payoffs for all the behaviors
+to set-payoffs
+  ask turtles [
+    set payoffs array:from-list all-zeros
+  ]
+end
+
+; set the consider? boolean array
+to set-consider
+  ask turtles [
+    set consider? array:from-list n-values num-behaviors [false]
+  ]
+end

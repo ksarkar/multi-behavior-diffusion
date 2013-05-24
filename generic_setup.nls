@@ -1,0 +1,47 @@
+;; Generic setup procedure
+
+globals [
+  ;;coloring variables ;;
+  neutral
+  base
+  step
+  scaling
+]
+
+to generic-setup [network-generation-task]
+  clear-all
+  
+  set-coloring-variables
+  
+  random-seed 12345 + rand-seed-network
+  run network-generation-task
+  
+  set-behaviors
+  
+  set-edge-weights
+  
+  random-seed 123456 + rand-seed-resource
+  set-resource
+  
+  random-seed 1234567 + rand-seed-threshold
+  set-thresholds
+  
+  set-actives
+  set-weight-sums
+  set-payoffs
+  set-consider 
+  
+  random-seed 12345 + rand-seed-network
+  select-seeds
+  
+  setup-indicators
+  
+  reset-ticks
+end
+
+to set-coloring-variables
+  set neutral white
+  set base red
+  set step 10
+  set scaling (base + num-behaviors * step) - (base + base + step)
+end
