@@ -65,6 +65,59 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+to spread-based-hill-climbing-inc-one-behav-per-seed-no-topup
+  set-spread
+  set reinit-turtle-var-task task [mini-setup-1-many-behav-per-seed]
+  
+  let seeds-required array:from-list array:to-list num-seeds-per-behavior
+  let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
+  
+  while [more-seeds-required? seeds-required] [
+    let new-candidates map [compute-best-candidate-one-behav-no-topup ? (array:item seeds-required ?) seedsets pop] (behav-id-list)
+    
+    ;; to handle boundary cases
+    (foreach behav-id-list new-candidates [
+        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
+          array:set seeds-required ?1 0
+        ]
+    ])
+    
+    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
+    
+    let winner-position position (max spread-values) spread-values
+    let winner item 0 (item winner-position new-candidates)
+    
+    ask winner [
+      set pop other pop
+    ]
+    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
+    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
+  ]
+  
+  ;; actives? field, color and resource is messed-up so set it up again
+  set-actives
+  set-neutral-color
+  restore-resources
+  
+  set seed-sets seedsets
+  set-seeds-active seedsets
+end
+
+to-report compute-best-candidate-one-behav-no-topup [behav-id num-seeds-req seedsets pop]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  set pop pop with [(resource - used-resource) >= array:item costs behav-id]    
+  
+  compute-spread-for-pop-1 behav-id seedsets pop
+  let best-candidate max-one-of pop [spread]
+  report (list best-candidate ([spread] of best-candidate))  
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 to spread-based-hill-climbing-incremental-one-behav-per-seed
   set-spread
   backup-resources

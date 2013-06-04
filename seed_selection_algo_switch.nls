@@ -87,9 +87,12 @@ to select-seeds
   ifelse seed-selection-algorithm = "spread-based-hill-climbing-incremental" [
     spread-based-hill-climbing-incremental
   ][
+  ifelse seed-selection-algorithm = "spread-based-hill-climbing-inc-one-behav-per-seed-no-topup" [
+    spread-based-hill-climbing-inc-one-behav-per-seed-no-topup
+  ][
   ifelse seed-selection-algorithm = "ideal-all-agent-adoption-without-network-effect" [
     ideal-all-agent-adoption-without-network-effect
   ][
   user-message "Specify the seed selection algorithm"
-  ]]]]]]]]]]]]]]]]]]]]]
+  ]]]]]]]]]]]]]]]]]]]]]]
 end
