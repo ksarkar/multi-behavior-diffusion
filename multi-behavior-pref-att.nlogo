@@ -176,7 +176,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-50
+100
 1
 1
 NIL
@@ -191,7 +191,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-5
+10
 1
 1
 NIL
@@ -438,7 +438,7 @@ SWITCH
 514
 matched-threshold?
 matched-threshold?
-1
+0
 1
 -1000
 
@@ -458,14 +458,14 @@ NIL
 HORIZONTAL
 
 CHOOSER
+22
+401
+205
+446
+seed-selection-algorithm
+seed-selection-algorithm
+"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "ideal-all-agent-adoption-without-network-effect" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
 20
-399
-223
-444
-seed-selection-algorithm
-seed-selection-algorithm
-"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh" "one-step-spread-hill-climbing-incremental-diff-thresh" "one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh" "one-step-spread-hill-climbing-incremental-matched-thresh" "ideal-all-agent-adoption-without-network-effect" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed" "spread-based-hill-climbing-incremental"
-12
 
 SLIDER
 19
@@ -508,10 +508,10 @@ seed-distribution
 0
 
 INPUTBOX
-238
-402
-453
-462
+237
+401
+452
+461
 final-ratio
 [3 2 1]
 1
@@ -557,7 +557,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-50
+5000
 1
 1
 NIL

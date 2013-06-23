@@ -129,7 +129,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-50
+100
 1
 1
 NIL
@@ -144,7 +144,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-5
+10
 1
 1
 NIL
@@ -428,12 +428,12 @@ HORIZONTAL
 CHOOSER
 23
 441
-212
+207
 486
 seed-selection-algorithm
 seed-selection-algorithm
-"ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh" "one-step-spread-hill-climbing-incremental-diff-thresh" "one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh" "one-step-spread-hill-climbing-incremental-matched-thresh" "spread-based-hill-climbing-with-random-tie-breaking" "spread-based-hill-climbing-incremental-one-behav-per-seed" "spread-based-hill-climbing-incremental"
-12
+"ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
+20
 
 SLIDER
 20
@@ -495,7 +495,7 @@ num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
 10000
-20
+200
 1
 1
 NIL
@@ -525,7 +525,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-50
+5000
 1
 1
 NIL

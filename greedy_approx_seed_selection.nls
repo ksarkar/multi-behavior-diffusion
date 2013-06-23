@@ -12,9 +12,11 @@ turtles-own [
   spread ;; spread for this agent
 ]
 
-to spread-based-hill-climbing-incremental
+;; Kempe-Kleinberg-Tardos seed selection with multiple behaviors per seed and no top up
+;; INC - incremetnal version 
+to KKT-M-NT
   set-spread
-  set reinit-turtle-var-task task [mini-setup-1-many-behav-per-seed]
+  set reinit-turtle-var-task task [mini-setup-1-many-with-no-topup]
   
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
@@ -46,7 +48,7 @@ to spread-based-hill-climbing-incremental
   set-seeds-active seedsets    
 end  
 
-to mini-setup-1-many-behav-per-seed
+to mini-setup-1-many-with-no-topup
   set-actives
   set-neutral-color
 end
@@ -64,17 +66,21 @@ to-report compute-best-candidate-for-spread-based-inc [behav-id num-seeds-req se
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Kempe-Kleinberg-Tardos greedy approx. seed selection algorithm with multiple behaviors per seed and top up
+;; INC - incremental approach
+;; top up dosen't take place if total resource exceeds 1.0
 
-to spread-based-hill-climbing-inc-one-behav-per-seed-no-topup
+to KKT-M-T
   set-spread
-  set reinit-turtle-var-task task [mini-setup-1-many-behav-per-seed]
+  backup-resources
+  set reinit-turtle-var-task task [mini-setup-1-with-topup]
   
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
   
   while [more-seeds-required? seeds-required] [
-    let new-candidates map [compute-best-candidate-one-behav-no-topup ? (array:item seeds-required ?) seedsets pop] (behav-id-list)
+    let new-candidates map [compute-best-candidate-this-behav-M-T ? (array:item seeds-required ?) seedsets] (behav-id-list)
     
     ;; to handle boundary cases
     (foreach behav-id-list new-candidates [
@@ -101,10 +107,65 @@ to spread-based-hill-climbing-inc-one-behav-per-seed-no-topup
   restore-resources
   
   set seed-sets seedsets
+  set-seeds-active seedsets   
+end
+
+to-report compute-best-candidate-this-behav-M-T [behav-id num-seeds-req seedsets]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  let pop turtles with [(not member? self (array:item seedsets behav-id)) and ((1.0 - used-resource) >= array:item costs behav-id)]
+  
+  compute-spread-for-pop-1 behav-id seedsets pop
+  let best-candidate max-one-of pop [spread]
+  report (list best-candidate ([spread] of best-candidate))
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Kempe-Kleinberg-Tardos greedy seed selection algorithm with single behavior per seed and no top up
+;; INC - incremental approach
+
+to KKT-S-NT
+  set-spread
+  set reinit-turtle-var-task task [mini-setup-1-many-with-no-topup]
+  
+  let seeds-required array:from-list array:to-list num-seeds-per-behavior
+  let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
+  
+  while [more-seeds-required? seeds-required] [
+    let new-candidates map [compute-best-candidate-this-behav-no-topup ? (array:item seeds-required ?) seedsets pop] (behav-id-list)
+    
+    ;; to handle boundary cases
+    (foreach behav-id-list new-candidates [
+        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
+          array:set seeds-required ?1 0
+        ]
+    ])
+    
+    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
+    
+    let winner-position position (max spread-values) spread-values
+    let winner item 0 (item winner-position new-candidates)
+    
+    ask winner [
+      set pop other pop
+    ]
+    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
+    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
+  ]
+  
+  ;; actives? field, color and resource is messed-up so set it up again
+  set-actives
+  set-neutral-color
+  
+  set seed-sets seedsets
   set-seeds-active seedsets
 end
 
-to-report compute-best-candidate-one-behav-no-topup [behav-id num-seeds-req seedsets pop]
+to-report compute-best-candidate-this-behav-no-topup [behav-id num-seeds-req seedsets pop]
   if num-seeds-req = 0 [
     report []
   ]
@@ -117,11 +178,13 @@ to-report compute-best-candidate-one-behav-no-topup [behav-id num-seeds-req seed
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Kempe-Kleinberg-Tardos greedy approx. seed selection algorithm with single behavior per seed and resource top up
+;; INC - incremental seed selection approach
 
-to spread-based-hill-climbing-incremental-one-behav-per-seed
+to KKT-S-T
   set-spread
   backup-resources
-  set reinit-turtle-var-task task [mini-setup-1-single-behav-per-seed]
+  set reinit-turtle-var-task task [mini-setup-1-with-topup]
   
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
@@ -207,7 +270,7 @@ to simulate-model-1 [b-id new-agent seedsets rand-seed]
   ] 
 end
 
-to mini-setup-1-single-behav-per-seed
+to mini-setup-1-with-topup
   set-actives
   set-neutral-color
   restore-resources
@@ -220,8 +283,8 @@ to mini-setup-1 [b-id new-agent seedsets rand-seed]
   ask new-agent [
     array:set actives? b-id true
     set-color
-    if array:item costs b-id > resource [
-      set resource array:item costs b-id
+    if (resource - used-resource) < array:item costs b-id [
+      set resource array:item costs b-id + used-resource  ;; r <- r + c - (r - ur)
     ]
   ]
     
@@ -234,7 +297,6 @@ end
 
    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 to spread-based-hill-climbing-with-random-tie-breaking
   init-spreads

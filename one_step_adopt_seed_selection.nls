@@ -14,18 +14,19 @@ turtles-own [
   one-step-spread-temp ;; one step spread when this turtle is added to the already computed seed set
 ]
 
-;;;Different Thresholds;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Core higher order generic incremental seed selection algorithm structure
 
-to one-step-spread-hill-climbing-incremental-diff-thresh
+to core-INC-IA [next-best-seed-selection-task]
   set-one-step-spread
   backup-resources
-  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-diff-thresh]
+  set compute-one-step-adopt-prob-task ifelse-value matched-threshold? [task [compute-one-step-adopt-prob-matched-thresh]] [task [compute-one-step-adopt-prob-diff-thresh]]
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
   let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
   
   while [more-seeds-required? seeds-required] [
-    let new-candidates map [best-seed-for-behav-by-heu-1 ? (array:item seeds-required ?) seedsets] (behav-id-list)
+    let new-candidates map [(runresult next-best-seed-selection-task ? (array:item seeds-required ?) seedsets pop)] (behav-id-list)
     
     ;; to handle boundary cases
     (foreach behav-id-list new-candidates [
@@ -53,50 +54,90 @@ to one-step-spread-hill-climbing-incremental-diff-thresh
   
   set seed-sets seedsets
   set-seeds-active seedsets  
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; immediate adoption based seed selection with multiple behaviors per seed and no top up
+;; INC - incremental approach
+
+to IA-M-NT
+  core-INC-IA task [next-best-seed-M-NT ?1 ?2 ?3 ?4]
+end
+
+to-report next-best-seed-M-NT [behav-id num-seeds-req seedsets dummmy-pop]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  let pop turtles with [(not member? self (array:item seedsets behav-id)) and ((resource - used-resource) >= array:item costs behav-id)]
+  
+  compute-one-step-spread behav-id seedsets pop
+  let best-candidate max-one-of pop [one-step-spread]
+  report (list best-candidate ([one-step-spread] of best-candidate))
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; immediate adoption based seed selection with multiple behaviors per seed and top up
+;; INC - incremental approach
+
+to IA-M-T
+  core-INC-IA task [next-best-seed-M-T ?1 ?2 ?3 ?4]
+end
+
+to-report next-best-seed-M-T [behav-id num-seeds-req seedsets dummmy-pop]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  let pop turtles with [(not member? self (array:item seedsets behav-id)) and ((1.0 - used-resource) >= array:item costs behav-id)]
+  
+  compute-one-step-spread behav-id seedsets pop
+  let best-candidate max-one-of pop [one-step-spread]
+  report (list best-candidate ([one-step-spread] of best-candidate))
+end
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; immediate adoption based seed selection with single behaviors per seed and no top up
+;; INC - incremental approach
+
+to IA-S-NT
+  core-INC-IA task [next-best-seed-S-NT ?1 ?2 ?3 ?4]
+end
+
+to-report next-best-seed-S-NT [behav-id num-seeds-req seedsets pop]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  set pop pop with [(resource - used-resource) >= array:item costs behav-id]
+  
+  compute-one-step-spread behav-id seedsets pop
+  let best-candidate max-one-of pop [one-step-spread]
+  report (list best-candidate ([one-step-spread] of best-candidate))
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; immediate adoption based seed selection with single behaviors per seed and top up
+;; INC - incremental approach
+
+to IA-S-T
+  core-INC-IA task [next-best-seed-S-T ?1 ?2 ?3 ?4]
+end
+
+to-report next-best-seed-S-T [behav-id num-seeds-req seedsets pop]
+  if num-seeds-req = 0 [
+    report []
+  ]
+  
+  compute-one-step-spread behav-id seedsets pop
+  let best-candidate max-one-of pop [one-step-spread]
+  report (list best-candidate ([one-step-spread] of best-candidate))
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to one-step-spread-hill-climbing-incremental-one-behav-per-seed-diff-thresh
-  set-one-step-spread
-  backup-resources
-  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-diff-thresh]
-  let seeds-required array:from-list array:to-list num-seeds-per-behavior
-  let pop turtles
-  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
-  
-  while [more-seeds-required? seeds-required] [
-    let new-candidates map [best-seed-for-behav-by-heu ? (array:item seeds-required ?) seedsets pop] (behav-id-list)
-    
-    ;; to handle boundary cases
-    (foreach behav-id-list new-candidates [
-        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
-          array:set seeds-required ?1 0
-        ]
-    ])
-    
-    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
-    
-    let winner-position position (max spread-values) spread-values
-    let winner item 0 (item winner-position new-candidates)
-    
-    ask winner [
-      set pop other pop
-    ]
-    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
-    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
-  ]
-  
-  ;; actives? field, color and resource is messed-up so set it up again
-  set-actives
-  set-neutral-color
-  restore-resources
-  
-  set seed-sets seedsets
-  set-seeds-active seedsets  
-end
-
+;; IA calculation for different threshold case
 ;; turtle procedure
+
 to compute-one-step-adopt-prob-diff-thresh
   let weight-behav-list filter [not empty? ?] (map [ifelse-value (?1 > 0) [list ?1 ?2] [[]]] (array:to-list weight-sums) behav-id-list)
   ifelse not empty? weight-behav-list [
@@ -183,169 +224,9 @@ to-report dec-to-bin-rec [dec-number]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;Matched Threshold;;;
-
-to one-step-spread-hill-climbing-incremental-matched-thresh
-  set-one-step-spread
-  backup-resources
-  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-matched-thresh]
-  let seeds-required array:from-list array:to-list num-seeds-per-behavior
-  let pop turtles
-  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
-  
-  while [more-seeds-required? seeds-required] [
-    let new-candidates map [best-seed-for-behav-by-heu-1 ? (array:item seeds-required ?) seedsets] (behav-id-list)
-    
-    ;; to handle boundary cases
-    (foreach behav-id-list new-candidates [
-        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
-          array:set seeds-required ?1 0
-        ]
-    ])
-    
-    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
-    
-    let winner-position position (max spread-values) spread-values
-    let winner item 0 (item winner-position new-candidates)
-    
-    ask winner [
-      set pop other pop
-    ]
-    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
-    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
-  ]
-  
-  ;; actives? field, color and resource is messed-up so set it up again
-  set-actives
-  set-neutral-color
-  restore-resources
-  
-  set seed-sets seedsets
-  set-seeds-active seedsets  
-end
-
-to-report best-seed-for-behav-by-heu-1 [behav-id num-seeds-req seedsets]
-  if num-seeds-req = 0 [
-    report []
-  ]
-  
-  let pop turtles with [(not member? self (array:item seedsets behav-id)) and ((resource - used-resource) >= array:item costs behav-id)]
-  
-  compute-one-step-spread behav-id seedsets pop
-  let best-candidate max-one-of pop [one-step-spread]
-  report (list best-candidate ([one-step-spread] of best-candidate))
-end
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to one-step-spread-hill-climbing-incremental-one-behav-per-seed-matched-thresh
-  set-one-step-spread
-  backup-resources
-  set compute-one-step-adopt-prob-task task [compute-one-step-adopt-prob-matched-thresh]
-  let seeds-required array:from-list array:to-list num-seeds-per-behavior
-  let pop turtles
-  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
-  
-  while [more-seeds-required? seeds-required] [
-    let new-candidates map [best-seed-for-behav-by-heu ? (array:item seeds-required ?) seedsets pop] (behav-id-list)
-    
-    ;; to handle boundary cases
-    (foreach behav-id-list new-candidates [
-        if (empty? ?2) and (array:item seeds-required ?1 != 0) [
-          array:set seeds-required ?1 0
-        ]
-    ])
-    
-    let spread-values map [ifelse-value empty? ? [-1] [item 1 ?]] new-candidates
-    
-    let winner-position position (max spread-values) spread-values
-    let winner item 0 (item winner-position new-candidates)
-    
-    ask winner [
-      set pop other pop
-    ]
-    array:set seeds-required winner-position ((array:item seeds-required winner-position) - 1)
-    array:set seedsets winner-position (turtle-set array:item seedsets winner-position winner)
-  ]
-  
-  ;; actives? field, color and resource is messed-up so set it up again
-  set-actives
-  set-neutral-color
-  restore-resources
-  
-  set seed-sets seedsets
-  set-seeds-active seedsets  
-end
-
-to set-one-step-spread
-  ask turtles [
-    set one-step-spread 0
-  ]
-end
-
-to-report best-seed-for-behav-by-heu [behav-id num-seeds-req seedsets pop]
-  if num-seeds-req = 0 [
-    report []
-  ]
-  
-  compute-one-step-spread behav-id seedsets pop
-  let best-candidate max-one-of pop [one-step-spread]
-  report (list best-candidate ([one-step-spread] of best-candidate))
-end
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to compute-one-step-spread [b-id seedsets pop]
-  foreach sort pop [
-    let one-step-spread-est estimate-one-step-spread b-id ? seedsets 
-    ask ? [
-      set one-step-spread one-step-spread-est 
-    ]
-  ]
-end
-
-to-report estimate-one-step-spread [b-id new-agent seedsets]
-  set-one-step-spread-temp
-  set-actives
-  restore-resources
-  reset-weight-sums
-  setup-seedset b-id new-agent seedsets
-  ;let seeds reduce [(turtle-set ?1 ?2)] array:to-list seedsets
-  ;set seeds (turtle-set seeds new-agent)
-  compute-one-step-spread-for-new-seed-set
-  report sum [one-step-spread-temp] of turtles
-end
-
-to setup-seedset [b-id new-agent seedsets]
-  set-seeds-active seedsets
-  ask new-agent [
-    array:set actives? b-id true
-    set-color
-    if array:item costs b-id > resource [
-      set resource array:item costs b-id
-    ]
-  ]
-end
-
-to set-one-step-spread-temp
-  ask turtles [
-    set one-step-spread-temp 0
-  ]
-end
-
-to compute-one-step-spread-for-new-seed-set
-  propagate-influence
-  
-  ask turtles [
-    run compute-one-step-adopt-prob-task
-  ]
-end
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; IA calculation for matched threshold case
 ;; turtle procedure
+
 to compute-one-step-adopt-prob-matched-thresh
   let weight-behav-list filter [not empty? ?] (map [ifelse-value (?1 > 0) [list ?1 ?2] [[]]] (array:to-list weight-sums) behav-id-list)
   ifelse not empty? weight-behav-list [
@@ -411,7 +292,63 @@ to process-isolated-turtles
     ]
   ]
 end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Common commands for IA computation
+
+to compute-one-step-spread [b-id seedsets pop]
+  foreach sort pop [
+    let one-step-spread-est estimate-one-step-spread b-id ? seedsets 
+    ask ? [
+      set one-step-spread one-step-spread-est 
+    ]
+  ]
+end
+
+to-report estimate-one-step-spread [b-id new-agent seedsets]
+  set-one-step-spread-temp
+  set-actives
+  restore-resources
+  reset-weight-sums
+  setup-seedset b-id new-agent seedsets
+  ;let seeds reduce [(turtle-set ?1 ?2)] array:to-list seedsets
+  ;set seeds (turtle-set seeds new-agent)
+  compute-one-step-spread-for-new-seed-set
+  report sum [one-step-spread-temp] of turtles
+end
+
+to setup-seedset [b-id new-agent seedsets]
+  set-seeds-active seedsets
+  ask new-agent [
+    array:set actives? b-id true
+    set-color
+    if (resource - used-resource) < array:item costs b-id [
+      set resource array:item costs b-id + used-resource  ;; r <- r + c - (r - ur)
+    ]
+  ]
+end
+
+to set-one-step-spread-temp
+  ask turtles [
+    set one-step-spread-temp 0
+  ]
+end
+
+to compute-one-step-spread-for-new-seed-set
+  propagate-influence
   
+  ask turtles [
+    run compute-one-step-adopt-prob-task
+  ]
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+to set-one-step-spread
+  ask turtles [
+    set one-step-spread 0
+  ]
+end
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; one step spread is the expected adoption in one time step
