@@ -1,96 +1,92 @@
-extensions [array profiler]
-
+extensions [array]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup
-  let network-generation-task task [setup-preferential-attachment-network]
+  let network-generation-task task [setup-small-world-network]
   generic-setup network-generation-task
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;Preferential Attachment Network;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Small World Network;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to setup-preferential-attachment-network
+to setup-small-world-network
+  make-turtles
+  wire-them
+  rewire-all
+end
+
+to make-turtles
   set-default-shape turtles "person"
-  
-  ;; make the initial network of two turtles and an edge
-  make-node nobody        ;; first node, unattached
-  make-node turtle 0
-  
-  ;; now add rest of the nodes
-  repeat number-of-nodes - 2 [
-    make-node find-partner
-    layout-preferential-attachment-network
+  crt number-of-nodes [ 
+    set color neutral 
+    set size 1.5
+  ]
+  ;; arrange them in a circle in order by who number
+  ;layout-circle (sort turtles) max-pxcor - 1
+end
+
+to wire-them
+  ;; iterate over the turtles
+  let n 0
+  while [n < count turtles]
+  [
+    ;; make edges with the next two neighbors
+    ;; this makes a lattice with average degree of 4
+    make-edge turtle n
+              turtle ((n + 1) mod count turtles)
+    make-edge turtle n
+              turtle ((n + 2) mod count turtles)
+    set n n + 1
   ]
 end
 
-;; used for creating a new node
-to make-node [old-node]
-  crt 1
-  [
-    set color neutral
-    if old-node != nobody
-      [ create-link-with old-node 
-        ;[ 
-        ;  set color neutral - 2 
-        ;]
-        ;; position the new node near its partner
-        move-to old-node
-        fd 8
-      ]
+;; connects the two turtles
+to make-edge [node1 node2]
+  ask node1 [ create-link-with node2  
+    ;[
+    ;  set color neutral - 2
+    ;] 
   ]
 end
 
-;; This code is borrowed from Lottery Example (in the Code Examples
-;; section of the Models Library).
-;; The idea behind the code is a bit tricky to understand.
-;; Basically we take the sum of the degrees (number of connections)
-;; of the turtles, and that's how many "tickets" we have in our lottery.
-;; Then we pick a random "ticket" (a random number).  Then we step
-;; through the turtles to figure out which node holds the winning ticket.
-to-report find-partner
-  let total random-float sum [count link-neighbors] of turtles
-  let partner nobody
-  ask turtles
-  [
-    let nc count link-neighbors
-    ;; if there's no winner yet...
-    if partner = nobody
+to rewire-all
+
+  ;; make sure num-turtles is setup correctly; if not run setup first
+  if count turtles != number-of-nodes [
+    setup-small-world-network
+  ]
+  
+  ask links [
+
+    let rewired? false
+    ;; whether to rewire it or not?
+    if (random-float 1) < rewiring-probability
     [
-      ifelse nc > total
-        [ set partner self ]
-        [ set total total - nc ]
+      ;; "a" remains the same
+      let node1 end1
+      ;; if "a" is not connected to everybody
+      if [ count link-neighbors ] of end1 < (count turtles - 1)
+      [
+        ;; find a node distinct from node1 and not already a neighbor of node1
+        let node2 one-of turtles with [ (self != node1) and (not link-neighbor? node1) ]
+        ;; wire the new edge
+        ask node1 [ create-link-with node2 
+          ;[ 
+          ;  set color neutral - 2
+          ;] 
+        ]
+
+        set rewired? true
+      ]
+    ]
+    ;; remove the old edge
+    if (rewired?)
+    [
+      die
     ]
   ]
-  report partner
-end
 
-;; lays out the preferential attachment network in aesthetic way
-to layout-preferential-attachment-network
-  ;; the number 3 here is arbitrary; more repetitions slows down the
-  ;; model, but too few gives poor layouts
-  repeat 3 [
-    ;; the more turtles we have to fit into the same amount of space,
-    ;; the smaller the inputs to layout-spring we'll need to use
-    let factor sqrt count turtles
-    ;; numbers here are arbitrarily chosen for pleasing appearance
-    layout-spring turtles links (1 / factor) (7 / factor) (1 / factor)
-    display  ;; for smooth animation
-  ]
-  ;; don't bump the edges of the world
-  let x-offset max [xcor] of turtles + min [xcor] of turtles
-  let y-offset max [ycor] of turtles + min [ycor] of turtles
-  ;; big jumps look funny, so only adjust a little each time
-  set x-offset limit-magnitude x-offset 0.1
-  set y-offset limit-magnitude y-offset 0.1
-  ask turtles [ setxy (xcor - x-offset / 2) (ycor - y-offset / 2) ]
-end
-
-to-report limit-magnitude [number limit]
-  if number > limit [ report limit ]
-  if number < (- limit) [ report (- limit) ]
-  report number
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,7 +134,6 @@ __includes [
   "simulation_count_vars.nls"
 ]    
     
-  
 @#$#@#$#@
 GRAPHICS-WINDOW
 917
@@ -176,47 +171,62 @@ number-of-nodes
 number-of-nodes
 1
 2000
-100
+500
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-21
-356
-204
-389
+23
+345
+206
+378
 total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-10
+51
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-17
-689
-204
-722
+20
+673
+207
+706
 rand-seed-network
 rand-seed-network
 1
 10000
-2164
+1997
 1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+23
+74
+195
+107
+rewiring-probability
+rewiring-probability
+0
+1
+0.2
+0.01
 1
 NIL
 HORIZONTAL
 
 BUTTON
-242
-10
-305
-43
+311
+23
+374
+56
 NIL
 setup
 NIL
@@ -230,10 +240,10 @@ NIL
 1
 
 BUTTON
-316
-10
-379
-43
+312
+74
+375
+107
 NIL
 go
 T
@@ -247,10 +257,10 @@ NIL
 1
 
 MONITOR
-241
-52
-337
-97
+282
+213
+415
+258
 total-active-count
 total-active-count
 17
@@ -258,10 +268,10 @@ total-active-count
 11
 
 SLIDER
-23
-104
-195
-137
+24
+145
+196
+178
 num-behaviors
 num-behaviors
 1
@@ -273,10 +283,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-347
-51
-480
-96
+282
+273
+415
+318
 NIL
 total-unique-active-count
 17
@@ -284,10 +294,10 @@ total-unique-active-count
 11
 
 MONITOR
-241
-106
-372
-151
+284
+337
+415
+382
 NIL
 utilization
 5
@@ -349,21 +359,21 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot utilization"
 
 INPUTBOX
-23
-144
-195
-204
+24
+185
+196
+245
 behavior-costs
-[0.9 0.9 0.9]
+[0.2 0.5 0.7]
 1
 0
 String
 
 INPUTBOX
-22
-261
-195
-321
+24
+250
+197
+310
 behavior-utilities
 [0.2 0.5 0.7]
 1
@@ -381,50 +391,50 @@ Specify the Network
 1
 
 TEXTBOX
-24
-75
-197
-105
+25
+116
+198
+146
 Specify the Behaviors
 16
 0.0
 1
 
 TEXTBOX
-24
-329
-174
-349
+26
+318
+176
+338
 Specify the Seeds
 16
 0.0
 1
 
 TEXTBOX
-21
-655
-187
-695
+23
+644
+189
+684
 Control Randomization
 16
 0.0
 1
 
 TEXTBOX
-23
-505
-173
-525
+25
+494
+175
+514
 Diffusion Model
 16
 0.0
 1
 
 SWITCH
-20
-571
-205
-604
+22
+560
+207
+593
 switching-cost?
 switching-cost?
 1
@@ -432,10 +442,10 @@ switching-cost?
 -1000
 
 SWITCH
-20
-533
-205
-566
+22
+522
+207
+555
 matched-threshold?
 matched-threshold?
 1
@@ -443,10 +453,10 @@ matched-threshold?
 -1000
 
 SLIDER
-20
-612
-204
-645
+22
+601
+206
+634
 benefit-of-inertia
 benefit-of-inertia
 0
@@ -458,20 +468,20 @@ NIL
 HORIZONTAL
 
 CHOOSER
-21
-453
-204
-498
+23
+441
+226
+486
 seed-selection-algorithm
 seed-selection-algorithm
-"randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "ideal-all-agent-adoption-without-network-effect" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
-10
+"ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
+14
 
 SLIDER
-17
-728
-204
-761
+20
+712
+207
+745
 rand-seed-resource
 rand-seed-resource
 0
@@ -483,10 +493,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-769
-204
-802
+21
+753
+207
+786
 rand-seed-threshold
 rand-seed-threshold
 0
@@ -498,20 +508,20 @@ NIL
 HORIZONTAL
 
 CHOOSER
-21
-397
-204
-442
+23
+386
+206
+431
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
 0
 
 INPUTBOX
-236
-424
-451
-484
+258
+403
+432
+463
 final-ratio
 [3 2 1]
 1
@@ -519,10 +529,10 @@ final-ratio
 String
 
 SLIDER
-237
-514
-454
-547
+258
+482
+434
+515
 num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
@@ -534,10 +544,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-238
-565
-456
-598
+259
+542
+431
+575
 max-step
 max-step
 0
@@ -549,27 +559,27 @@ NIL
 HORIZONTAL
 
 SLIDER
-241
-163
-449
-196
+248
+119
+446
+152
 num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-1000
+5000
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-240
-207
-329
-240
+301
+162
+390
+195
 NIL
-go-bspace
+go-bspace\n
 NIL
 1
 T
@@ -580,33 +590,11 @@ NIL
 NIL
 1
 
-MONITOR
-239
-252
-329
-297
-NIL
-total-part-mean
-2
-1
-11
-
-MONITOR
-341
-252
-424
-297
-NIL
-total-part-sd
-2
-1
-11
-
 BUTTON
-341
-206
-421
-239
+403
+49
+483
+82
 run-expt
 setup\ngo-bspace\nshow seed-selection-algorithm\nshow total-part-mean\nshow total-part-sd\nshow total-adopt-mean\nshow total-adopt-sd\nshow act-counts-mean\nshow act-counts-sd\nshow util-mean\nshow util-sd
 NIL
@@ -618,61 +606,6 @@ NIL
 NIL
 NIL
 1
-
-MONITOR
-240
-365
-332
-410
-NIL
-util-mean
-2
-1
-11
-
-MONITOR
-240
-309
-332
-354
-NIL
-total-adopt-mean
-2
-1
-11
-
-MONITOR
-341
-309
-434
-354
-NIL
-total-adopt-sd
-2
-1
-11
-
-MONITOR
-341
-366
-398
-411
-NIL
-util-sd
-2
-1
-11
-
-SWITCH
-23
-214
-196
-247
-proportional-util?
-proportional-util?
-0
-1
--1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1022,39 +955,18 @@ NetLogo 5.0.2
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="seed-selection-heuristic-comparison-extra-switching-cost-threshold-average" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="seed-selection-heuristic-comparison" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="100"/>
+    <timeLimit steps="500"/>
     <metric>utilization</metric>
     <metric>total-active-count</metric>
     <metric>total-unique-active-count</metric>
-    <metric>array:item active-counts 0</metric>
-    <metric>array:item active-counts 1</metric>
-    <metric>array:item active-counts 2</metric>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;naive-degree-ranked-with-knapsack-assignment&quot;"/>
-      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
-      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-costs">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
@@ -1062,14 +974,187 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;randomly-with-random-tie-breaking&quot;"/>
+      <value value="&quot;degree-and-resource-ranked-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-ranked-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="seed-distribution" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="500"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="matched-threshold?">
       <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
+      <value value="&quot;proportional to cost&quot;"/>
+      <value value="&quot;inversely proportional to cost&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="seed-selection-heuristic-comparison-network-average" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="500"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;randomly-with-random-tie-breaking&quot;"/>
+      <value value="&quot;degree-and-resource-ranked-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-ranked-with-random-tie-breaking&quot;"/>
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="seed-distribution-network-average" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="500"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+      <value value="&quot;proportional to cost&quot;"/>
+      <value value="&quot;inversely proportional to cost&quot;"/>
     </enumeratedValueSet>
   </experiment>
   <experiment name="seed-distribution-switching-cost-threshold-average" repetitions="1" runMetricsEveryStep="false">
@@ -1079,39 +1164,42 @@ NetLogo 5.0.2
     <metric>utilization</metric>
     <metric>total-active-count</metric>
     <metric>total-unique-active-count</metric>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="switching-cost?">
       <value value="true"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
@@ -1128,39 +1216,42 @@ NetLogo 5.0.2
     <metric>utilization</metric>
     <metric>total-active-count</metric>
     <metric>total-unique-active-count</metric>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="4937"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="matched-threshold?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
@@ -1173,44 +1264,47 @@ NetLogo 5.0.2
   <experiment name="max-utilization-threshold-average" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="100"/>
+    <timeLimit steps="500"/>
     <metric>utilization</metric>
     <metric>total-active-count</metric>
     <metric>total-unique-active-count</metric>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="switching-cost?">
       <value value="false"/>
       <value value="true"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;ideal-all-agent-adoption-without-network-effect&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
@@ -1223,46 +1317,102 @@ NetLogo 5.0.2
     <metric>utilization</metric>
     <metric>total-active-count</metric>
     <metric>total-unique-active-count</metric>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="switching-cost?">
       <value value="false"/>
       <value value="true"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;ideal-all-agent-adoption-without-network-effect&quot;"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="total-num-seeds">
       <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-threshold">
       <value value="4937"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;ideal-all-agent-adoption-without-network-effect&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="num-seed-vs-utilization-threshold-average" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="seed-selection-heuristic-comparison-extra-switchingc-cost-threshold-average" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <metric>array:item active-counts 0</metric>
+    <metric>array:item active-counts 1</metric>
+    <metric>array:item active-counts 2</metric>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;naive-degree-ranked-with-knapsack-assignment&quot;"/>
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="seed-size-vs-utilization-threshold-average" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="100"/>
@@ -1275,18 +1425,30 @@ NetLogo 5.0.2
     <metric>array:item num-seeds-per-behavior 0</metric>
     <metric>array:item num-seeds-per-behavior 1</metric>
     <metric>array:item num-seeds-per-behavior 2</metric>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="100"/>
-      <value value="200"/>
-      <value value="300"/>
-      <value value="400"/>
-      <value value="500"/>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="benefit-of-inertia">
       <value value="0.2"/>
@@ -1294,27 +1456,18 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="behavior-costs">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="number-of-nodes">
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="100"/>
+      <value value="200"/>
+      <value value="300"/>
+      <value value="400"/>
       <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="final-ratio">
-      <value value="&quot;[1 2 3]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-resource">
       <value value="3852"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-network">
       <value value="5476"/>
@@ -1330,29 +1483,11 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;naive-degree-ranked-with-knapsack-assignment&quot;"/>
-      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
-      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-costs">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
@@ -1360,11 +1495,32 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;naive-degree-ranked-with-knapsack-assignment&quot;"/>
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
@@ -1380,48 +1536,51 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-network">
       <value value="5476"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;randomly-with-random-tie-breaking&quot;"/>
       <value value="&quot;degree-and-resource-ranked-with-random-tie-breaking&quot;"/>
       <value value="&quot;one-step-spread-ranked-with-random-tie-breaking&quot;"/>
       <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="true"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
+    <enumeratedValueSet variable="rewiring-probability">
       <value value="0.2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="seed-selection-heuristic-comparison-switching-cost-network-average" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="seed-selection-sw-c-network-average" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="100"/>
@@ -1431,10 +1590,28 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
-    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;randomly-with-random-tie-breaking&quot;"/>
       <value value="&quot;degree-and-resource-ranked-with-random-tie-breaking&quot;"/>
@@ -1444,38 +1621,23 @@ NetLogo 5.0.2
       <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
       <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="4937"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="benefit-of-inertia">
       <value value="0.2"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="seed-selection-heuristic-comparison-n-sw-cost-network-average" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="seed-selection-n-sw-c-network-average" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="100"/>
@@ -1485,29 +1647,11 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
-    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;naive-degree-ranked-with-knapsack-assignment&quot;"/>
-      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
-      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="4937"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-costs">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
@@ -1515,11 +1659,32 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;naive-degree-ranked-with-knapsack-assignment&quot;"/>
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-no-nudging&quot;"/>
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
@@ -1532,39 +1697,42 @@ NetLogo 5.0.2
     <metric>utilization</metric>
     <metric>total-active-count</metric>
     <metric>total-unique-active-count</metric>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="switching-cost?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;highest cost behavior only&quot;"/>
@@ -1581,39 +1749,42 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="switching-cost?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
@@ -1631,20 +1802,41 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="benefit-of-inertia">
       <value value="0.2"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-distribution">
-      <value value="&quot;in ratio&quot;"/>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="final-ratio">
       <value value="&quot;[1 2 3]&quot;"/>
@@ -1654,28 +1846,10 @@ NetLogo 5.0.2
       <value value="&quot;[3 1 2]&quot;"/>
       <value value="&quot;[3 2 1]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;in ratio&quot;"/>
     </enumeratedValueSet>
     <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
   </experiment>
   <experiment name="seed-selection-heuristic-comparison-switching-cost-threshold-average-repeat" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
@@ -1687,27 +1861,11 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="500"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-costs">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
@@ -1715,14 +1873,157 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="naive-seed-size-vs-utilization-threshold-average" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <metric>array:item active-counts 0</metric>
+    <metric>array:item active-counts 1</metric>
+    <metric>array:item active-counts 2</metric>
+    <metric>array:item num-seeds-per-behavior 0</metric>
+    <metric>array:item num-seeds-per-behavior 1</metric>
+    <metric>array:item num-seeds-per-behavior 2</metric>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="2999"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="50"/>
+      <value value="100"/>
+      <value value="200"/>
+      <value value="300"/>
+      <value value="400"/>
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="naive-seed-size-vs-utilization-threshold-average-n-sw-cost" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <metric>array:item active-counts 0</metric>
+    <metric>array:item active-counts 1</metric>
+    <metric>array:item active-counts 2</metric>
+    <metric>array:item num-seeds-per-behavior 0</metric>
+    <metric>array:item num-seeds-per-behavior 1</metric>
+    <metric>array:item num-seeds-per-behavior 2</metric>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;naive-degree-ranked-with-random-tie-breaking-with-nudging&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="50"/>
+      <value value="100"/>
+      <value value="200"/>
+      <value value="300"/>
+      <value value="400"/>
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
     </enumeratedValueSet>
   </experiment>
   <experiment name="greedy-approx-seed-selection" repetitions="1" runMetricsEveryStep="false">
@@ -1741,11 +2042,11 @@ NetLogo 5.0.2
     <metric>array:item act-counts-sd 1</metric>
     <metric>array:item act-counts-mean 2</metric>
     <metric>array:item act-counts-sd 2</metric>
-    <enumeratedValueSet variable="final-ratio">
-      <value value="&quot;[3 2 1]&quot;"/>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
-      <value value="1000"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="max-step">
       <value value="50"/>
@@ -1753,96 +2054,50 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
       <value value="1000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-samples-for-spread-estimation">
-      <value value="5000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-resource">
       <value value="3852"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;spread-based-hill-climbing-with-random-tie-breaking&quot;"/>
     </enumeratedValueSet>
-  </experiment>
-  <experiment name="seed-selection-heu-comp-n-sw-cost-thresh-av-test" repetitions="1" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="100"/>
-    <metric>utilization</metric>
-    <metric>total-active-count</metric>
-    <metric>total-unique-active-count</metric>
-    <metric>array:item active-counts 0</metric>
-    <metric>array:item active-counts 1</metric>
-    <metric>array:item active-counts 2</metric>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="5476"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="50"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;one-step-spread-ranked-with-random-tie-breaking&quot;"/>
-      <value value="&quot;one-step-spread-hill-climbing-with-random-tie-breaking&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-threshold" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="matched-threshold?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="5476"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-distribution">
-      <value value="&quot;uniform&quot;"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="comp-with-greedy-th-av-matched-thresh" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="comp-with-greedy-th-ave-matched-th" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go-bspace</go>
     <timeLimit steps="1"/>
@@ -1861,17 +2116,50 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="num-samples-for-spread-estimation">
       <value value="5000"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="10"/>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="1000"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="benefit-of-inertia">
       <value value="0.2"/>
     </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="true"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-resource">
       <value value="3852"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-distribution">
-      <value value="&quot;uniform&quot;"/>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;spread-based-hill-climbing-incremental-one-behav-per-seed&quot;"/>
@@ -1881,41 +2169,11 @@ NetLogo 5.0.2
       <value value="&quot;one-step-spread-hill-climbing-incremental-one-behav-per-seed&quot;"/>
       <value value="&quot;one-step-spread-hill-climbing-incremental&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="1000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-step">
-      <value value="50"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="final-ratio">
-      <value value="&quot;[3 2 1]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="true"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="rand-seed-network">
       <value value="5476"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
-      <value value="200"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-behaviors">
-      <value value="3"/>
-    </enumeratedValueSet>
   </experiment>
-  <experiment name="seed-selection-heu-ia-s-t-n-sw-network-average" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="seed-selection-n-sw-c-network-average-IA-S-T" repetitions="1" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="100"/>
@@ -1925,20 +2183,68 @@ NetLogo 5.0.2
     <metric>array:item active-counts 0</metric>
     <metric>array:item active-counts 1</metric>
     <metric>array:item active-counts 2</metric>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
-      <value value="200"/>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;IA-S-T&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="seed-distribution">
       <value value="&quot;uniform&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="max-step">
-      <value value="50"/>
+  </experiment>
+  <experiment name="seed-selection-ia-s-t-n-sw-net-av" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>utilization</metric>
+    <metric>total-active-count</metric>
+    <metric>total-unique-active-count</metric>
+    <metric>array:item active-counts 0</metric>
+    <metric>array:item active-counts 1</metric>
+    <metric>array:item active-counts 2</metric>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="51"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-utilities">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="final-ratio">
       <value value="&quot;[3 2 1]&quot;"/>
@@ -1946,14 +2252,17 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="switching-cost?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="matched-threshold?">
-      <value value="false"/>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-samples-for-spread-estimation">
-      <value value="5000"/>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="number-of-nodes">
       <value value="500"/>
@@ -1961,109 +2270,12 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="seed-selection-algorithm">
       <value value="&quot;IA-S-T&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="4937"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="5999"/>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="51"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="diff-costs" repetitions="1" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go-bspace</go>
-    <timeLimit steps="1"/>
-    <metric>total-part-mean</metric>
-    <metric>total-part-sd</metric>
-    <metric>total-adopt-mean</metric>
-    <metric>total-adopt-sd</metric>
-    <metric>util-mean</metric>
-    <metric>util-sd</metric>
-    <enumeratedValueSet variable="proportional-util?">
-      <value value="true"/>
-    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1000" step="1" last="1999"/>
     <enumeratedValueSet variable="matched-threshold?">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-samples-for-spread-estimation">
-      <value value="1000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="final-ratio">
-      <value value="&quot;[3 2 1]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="switching-cost?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-distribution">
-      <value value="&quot;uniform&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="total-num-seeds">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-threshold">
-      <value value="4937"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="behavior-costs">
-      <value value="&quot;[0.1 0.1 0.1]&quot;"/>
-      <value value="&quot;[0.1 0.1 0.3]&quot;"/>
-      <value value="&quot;[0.1 0.1 0.5]&quot;"/>
-      <value value="&quot;[0.1 0.1 0.7]&quot;"/>
-      <value value="&quot;[0.1 0.1 0.9]&quot;"/>
-      <value value="&quot;[0.1 0.3 0.3]&quot;"/>
-      <value value="&quot;[0.1 0.3 0.5]&quot;"/>
-      <value value="&quot;[0.1 0.3 0.7]&quot;"/>
-      <value value="&quot;[0.1 0.3 0.9]&quot;"/>
-      <value value="&quot;[0.1 0.5 0.5]&quot;"/>
-      <value value="&quot;[0.1 0.5 0.7]&quot;"/>
-      <value value="&quot;[0.1 0.5 0.9]&quot;"/>
-      <value value="&quot;[0.1 0.7 0.7]&quot;"/>
-      <value value="&quot;[0.1 0.7 0.9]&quot;"/>
-      <value value="&quot;[0.1 0.9 0.9]&quot;"/>
-      <value value="&quot;[0.3 0.3 0.3]&quot;"/>
-      <value value="&quot;[0.3 0.3 0.5]&quot;"/>
-      <value value="&quot;[0.3 0.3 0.7]&quot;"/>
-      <value value="&quot;[0.3 0.3 0.9]&quot;"/>
-      <value value="&quot;[0.3 0.5 0.5]&quot;"/>
-      <value value="&quot;[0.3 0.5 0.7]&quot;"/>
-      <value value="&quot;[0.3 0.5 0.9]&quot;"/>
-      <value value="&quot;[0.3 0.7 0.7]&quot;"/>
-      <value value="&quot;[0.3 0.7 0.9]&quot;"/>
-      <value value="&quot;[0.3 0.9 0.9]&quot;"/>
-      <value value="&quot;[0.5 0.5 0.5]&quot;"/>
-      <value value="&quot;[0.5 0.5 0.7]&quot;"/>
-      <value value="&quot;[0.5 0.5 0.9]&quot;"/>
-      <value value="&quot;[0.5 0.7 0.7]&quot;"/>
-      <value value="&quot;[0.5 0.7 0.9]&quot;"/>
-      <value value="&quot;[0.5 0.9 0.9]&quot;"/>
-      <value value="&quot;[0.7 0.7 0.7]&quot;"/>
-      <value value="&quot;[0.7 0.7 0.9]&quot;"/>
-      <value value="&quot;[0.7 0.9 0.9]&quot;"/>
-      <value value="&quot;[0.9 0.9 0.9]&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
-      <value value="200"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-network">
-      <value value="2164"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="seed-selection-algorithm">
-      <value value="&quot;IA-S-T&quot;"/>
-      <value value="&quot;degree-and-resource-ranked-with-random-tie-breaking&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-nodes">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-step">
-      <value value="50"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rand-seed-resource">
-      <value value="3852"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
@@ -2071,8 +2283,8 @@ NetLogo 5.0.2
     <enumeratedValueSet variable="behavior-utilities">
       <value value="&quot;[0.2 0.5 0.7]&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="benefit-of-inertia">
-      <value value="0.2"/>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
