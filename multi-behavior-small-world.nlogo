@@ -178,10 +178,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-23
-345
-206
-378
+24
+396
+207
+429
 total-num-seeds
 total-num-seeds
 1
@@ -194,9 +194,9 @@ HORIZONTAL
 
 SLIDER
 20
-673
+724
 207
-706
+757
 rand-seed-network
 rand-seed-network
 1
@@ -370,10 +370,10 @@ behavior-costs
 String
 
 INPUTBOX
-24
-250
-197
-310
+25
+300
+198
+360
 behavior-utilities
 [0.2 0.5 0.7]
 1
@@ -401,40 +401,40 @@ Specify the Behaviors
 1
 
 TEXTBOX
-26
-318
-176
-338
+27
+369
+177
+389
 Specify the Seeds
 16
 0.0
 1
 
 TEXTBOX
-23
-644
-189
-684
+24
+695
+190
+735
 Control Randomization
 16
 0.0
 1
 
 TEXTBOX
-25
-494
-175
-514
+26
+545
+176
+565
 Diffusion Model
 16
 0.0
 1
 
 SWITCH
-22
-560
-207
-593
+23
+610
+208
+643
 switching-cost?
 switching-cost?
 1
@@ -442,10 +442,10 @@ switching-cost?
 -1000
 
 SWITCH
-22
-522
-207
-555
+23
+573
+208
+606
 matched-threshold?
 matched-threshold?
 1
@@ -453,10 +453,10 @@ matched-threshold?
 -1000
 
 SLIDER
-22
-601
-206
-634
+23
+652
+207
+685
 benefit-of-inertia
 benefit-of-inertia
 0
@@ -468,10 +468,10 @@ NIL
 HORIZONTAL
 
 CHOOSER
-23
-441
-226
-486
+24
+492
+227
+537
 seed-selection-algorithm
 seed-selection-algorithm
 "ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
@@ -479,9 +479,9 @@ seed-selection-algorithm
 
 SLIDER
 20
-712
+763
 207
-745
+796
 rand-seed-resource
 rand-seed-resource
 0
@@ -493,10 +493,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-21
-753
-207
-786
+22
+804
+208
+837
 rand-seed-threshold
 rand-seed-threshold
 0
@@ -508,10 +508,10 @@ NIL
 HORIZONTAL
 
 CHOOSER
-23
-386
-206
-431
+24
+437
+207
+482
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
@@ -606,6 +606,17 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+25
+255
+199
+289
+proportional-util?
+proportional-util?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?

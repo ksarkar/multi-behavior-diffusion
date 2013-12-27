@@ -57,9 +57,38 @@ to set-behaviors
   set all-zeros n-values num-behaviors [0]
 end
 
+;;;;;;;;;;;; Edge weight setup ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; edge-weight switch
+to set-edge-weights
+  ifelse influence-weight = "uniform" [
+    set-uniform-edge-weights
+  ][
+  ifelse influence-weight = "random" [
+    set-random-edge-weights
+  ]
+  [
+    user-message "Specify the influence weight assignment model"    
+  ]
+  ]
+end
+
+;; set edge-weights such that the sum of incoming edge weights is 1.0
+;; each individual edge weight is set randomly
+to set-random-edge-weights
+  ask turtles [
+    let weight-sum 1.0
+    ask my-links [
+      let weight random-float weight-sum
+      set weight-sum weight-sum - weight
+      set-weight myself weight
+    ]
+  ]
+end     
+
 ;; sets edge weights such that sum of incoming edge weights equal to 1,
 ;; and each incoming edge for an agent has same weight
-to set-edge-weights
+;; if an agent has N neighbors then each neighbor influences him with weight 1/N
+to set-uniform-edge-weights
   ask turtles [
     if count my-links != 0 [
       let weight 1.0 / count my-links
@@ -113,6 +142,7 @@ end
 to set-weight-sums
   ask turtles [
     set weight-sums array:from-list all-zeros
+    set last-weight-sums array:from-list all-zeros
   ]
 end
 

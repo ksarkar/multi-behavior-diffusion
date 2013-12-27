@@ -6,6 +6,8 @@ globals [
   base
   step
   scaling
+  run-count        ;; will be used by multiple-run.nls
+  rand-seed-sel    ;; will be used by mulitple-run.nls
 ]
 
 to generic-setup [network-generation-task]
@@ -18,6 +20,7 @@ to generic-setup [network-generation-task]
   
   set-behaviors
   
+  random-seed 1234578 + rand-seed-edge-weight
   set-edge-weights
   
   random-seed 123456 + rand-seed-resource
@@ -31,10 +34,20 @@ to generic-setup [network-generation-task]
   set-payoffs
   set-consider 
   
-  random-seed 12345 + rand-seed-network
+  random-seed 12345 + rand-seed-seed-sel
   select-seeds
   
   setup-indicators
+  
+  
+  ;; data mining
+  set run-count 0
+  set rand-seed-sel rand-seed-seed-sel
+  
+  setup-estimates
+  update-est-stats
+  
+  setup-seeds?
   
   reset-ticks
 end

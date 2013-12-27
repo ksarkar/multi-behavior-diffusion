@@ -2,7 +2,7 @@
 ;;;Diffusion Model;;;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-to go
+to old-go
   if no-new-adoption? [stop]
   
   reset-roundActiveCounts
@@ -148,6 +148,7 @@ to-report knapsack-decide
       let total-payoff 0
       foreach ? [
         set total-payoff total-payoff + (array:item payoffs ?)
+        ;print total-payoff
       ]
       if total-payoff > max-payoff [
         set max-payoff total-payoff

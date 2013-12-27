@@ -114,19 +114,21 @@ end
 to randomly-with-random-tie-breaking
   let seeds-required array:from-list array:to-list num-seeds-per-behavior
   let pop turtles
+  let seedsets array:from-list n-values num-behaviors [turtle-set nobody]
   
   while [more-seeds-required? seeds-required] [
-    let seedsets map [n-of (array:item seeds-required ?) pop] (behav-id-list)
+    let new-seedsets map [n-of (array:item seeds-required ?) pop] (behav-id-list)
     
-    let seeds reduce [(turtle-set ?1 ?2)] seedsets
+    let seeds reduce [(turtle-set ?1 ?2)] new-seedsets
     
     set pop pop with [not member? self seeds]
     
     ask seeds [
-      let candidates filter [member? self (item ? seedsets)] (behav-id-list)
+      let candidates filter [member? self (item ? new-seedsets)] (behav-id-list)
       let winner item (random length candidates) candidates
       array:set actives? winner true
       array:set seeds-required winner ((array:item seeds-required winner) - 1)
+      array:set seedsets winner (turtle-set array:item seedsets winner self)
       ;; with resource nudging
       if array:item costs winner > resource [
         set resource array:item costs winner
@@ -134,4 +136,6 @@ to randomly-with-random-tie-breaking
       set-color
     ] 
   ]
+  
+  set seed-sets seedsets
 end

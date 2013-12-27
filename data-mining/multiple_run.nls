@@ -1,0 +1,85 @@
+;; to run the deterministic diffusion model multiple times under different
+;; randomly chosen seed set
+
+turtles-own [
+  seeds?        ;; predicate for marking whether the turtle is a seed or not - an array
+]
+  
+
+to go
+  if num-runs != 0 [
+    if run-count >= num-runs [stop]
+  ]
+  
+  setup-new-seeds rand-seed-sel
+  
+  let step-count 0
+  while [(not no-new-adoption?) and (step-count < max-step)] [
+    run-one-tick
+    set step-count step-count + 1
+  ] 
+  
+  set rand-seed-sel rand-seed-sel + 1
+  set run-count run-count + 1
+end
+
+to setup-new-seeds [rand-seed]
+  set-actives
+  set-neutral-color
+  
+  random-seed 12345 + rand-seed
+  select-seeds
+  
+  mark-seeds seed-sets
+  
+  setup-indicators
+  
+  reset-ticks
+end
+
+to run-one-tick
+  ;; reset counters for the diffusion process
+  reset-roundActiveCounts
+  reset-weight-sums
+  reset-consider
+  reset-payoffs
+  
+  ;; diffusion process
+  propagate-influence
+  make-adoption-decision
+  
+  update-indicators
+  
+  ;; data mining
+  update-estimates
+  update-est-stats
+  
+  set-last-weight-sums
+  
+  tick
+end
+
+
+to set-last-weight-sums
+  ask turtles [
+    foreach behav-id-list [
+      array:set last-weight-sums ? (array:item weight-sums ?)
+    ]
+  ]
+end
+
+to setup-seeds?
+  ask turtles [
+    set seeds? array:from-list n-values num-behaviors [false]
+  ]
+end
+
+to mark-seeds [seedsets]
+  (foreach behav-id-list array:to-list seedsets [
+    ask ?2 [
+      array:set seeds? ?1 true
+    ]
+  ])
+end
+  
+    

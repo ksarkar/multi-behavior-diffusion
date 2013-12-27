@@ -1,0 +1,88 @@
+;; code for data mining module
+
+turtles-own [
+  theta-min     ;; lower bound for theta estimate
+  theta-max     ;; upper bound for theta estimate
+  last-weight-sums  ;; stores the weight-sum of the last but one tick
+]
+
+;; setup estimate variables for each turtle
+to setup-estimates
+  ask turtles [
+    setup-theta
+  ]
+end
+
+;; turtle procedure to set up threshold estimates
+to setup-theta 
+  set theta-min 0.0
+  set theta-max 1.0
+end
+
+;; updates estimates after each tick
+to update-estimates
+  ask turtles [
+    estimate-threshold
+  ]
+end
+
+;;;;;;;;;;Threshold Estimation;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; turtle procedure
+to estimate-threshold
+  foreach behav-id-list [
+    if (not array:item seeds? ?) and (array:item actives? ?) [
+      set theta-max min list theta-max (array:item weight-sums ?)
+      set theta-min max list theta-min (array:item last-weight-sums ?)
+      array:set seeds? ? true
+    ]
+  ]
+end
+
+
+;;;;;;;;;;Estimate Accuracy Statistics;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to update-est-stats
+  reset-est-stats-counters
+  ask turtles [
+    update-threshold-stats
+  ]
+  finalize-est-stats
+end
+
+to reset-est-stats-counters
+  reset-threshold-stats
+end
+
+to finalize-est-stats
+  finalize-thresh-stats
+end
+
+;;;;;;;;Threshold stats;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+globals [
+  thresh-max-abs-dev
+  thresh-av-abs-dev
+  thresh-mse
+]
+
+to reset-threshold-stats
+  set thresh-max-abs-dev 0
+  set thresh-av-abs-dev 0
+  set thresh-mse 0
+end
+
+;; turtle procedure
+to update-threshold-stats
+  let theta-est (theta-max + theta-min) / 2
+  
+  set thresh-max-abs-dev max (list thresh-max-abs-dev (abs (array:item thresholds 0 - theta-est)))
+  set thresh-av-abs-dev thresh-av-abs-dev + (abs (array:item thresholds 0 - theta-est)) 
+  set thresh-mse thresh-mse + ((array:item thresholds 0) - theta-est) ^ 2
+end
+
+to finalize-thresh-stats
+  set thresh-av-abs-dev thresh-av-abs-dev / count turtles
+  set thresh-mse thresh-mse / count turtles
+end 
+  
+  

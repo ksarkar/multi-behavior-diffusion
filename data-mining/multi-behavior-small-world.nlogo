@@ -23,7 +23,7 @@ to make-turtles
     set size 1.5
   ]
   ;; arrange them in a circle in order by who number
-  ;layout-circle (sort turtles) max-pxcor - 1
+  layout-circle (sort turtles) max-pxcor - 1
 end
 
 to wire-them
@@ -132,6 +132,12 @@ __includes [
   
   ;; simulation count variables
   "simulation_count_vars.nls"
+  
+   ;; code for running the diffusion model multiple times
+  "multiple_run.nls"
+  
+  ;; code for data mining
+  "data_mining.nls"
 ]    
     
 @#$#@#$#@
@@ -171,22 +177,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-500
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-23
-345
-206
-378
-total-num-seeds
-total-num-seeds
-1
-number-of-nodes
-51
+1000
 1
 1
 NIL
@@ -194,9 +185,24 @@ HORIZONTAL
 
 SLIDER
 20
-673
-207
-706
+388
+203
+421
+total-num-seeds
+total-num-seeds
+1
+number-of-nodes
+100
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+735
+204
+768
 rand-seed-network
 rand-seed-network
 1
@@ -223,10 +229,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-311
-23
-374
-56
+220
+37
+283
+70
 NIL
 setup
 NIL
@@ -240,10 +246,10 @@ NIL
 1
 
 BUTTON
-312
-74
-375
-107
+297
+38
+360
+71
 NIL
 go
 T
@@ -257,10 +263,10 @@ NIL
 1
 
 MONITOR
-282
-213
-415
-258
+1608
+234
+1683
+279
 total-active-count
 total-active-count
 17
@@ -283,10 +289,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-282
-273
-415
-318
+1608
+294
+1686
+339
 NIL
 total-unique-active-count
 17
@@ -294,10 +300,10 @@ total-unique-active-count
 11
 
 MONITOR
-284
-337
-415
-382
+1610
+358
+1685
+403
 NIL
 utilization
 5
@@ -305,10 +311,10 @@ utilization
 11
 
 PLOT
-502
-28
-811
-230
+429
+23
+651
+166
 per-behavior-adoption
 time
 active-count
@@ -322,10 +328,10 @@ true
 PENS
 
 PLOT
-501
-260
-813
-454
+658
+22
+892
+167
 total-adoption
 time
 active-counts
@@ -341,10 +347,10 @@ PENS
 "spread" 1.0 0 -14454117 true "" "plot total-active-count"
 
 PLOT
-501
-488
-815
-678
+430
+173
+655
+307
 utilization
 time
 utilization
@@ -371,9 +377,9 @@ String
 
 INPUTBOX
 24
-250
+288
 197
-310
+348
 behavior-utilities
 [0.2 0.5 0.7]
 1
@@ -401,40 +407,40 @@ Specify the Behaviors
 1
 
 TEXTBOX
-26
-318
+27
+359
 176
-338
+379
 Specify the Seeds
 16
 0.0
 1
 
 TEXTBOX
-23
-644
-189
-684
+20
+706
+186
+746
 Control Randomization
 16
 0.0
 1
 
 TEXTBOX
-25
-494
-175
-514
+23
+528
+173
+548
 Diffusion Model
 16
 0.0
 1
 
 SWITCH
-22
-560
-207
-593
+18
+632
+203
+665
 switching-cost?
 switching-cost?
 1
@@ -442,46 +448,46 @@ switching-cost?
 -1000
 
 SWITCH
-22
-522
-207
-555
+18
+550
+203
+583
 matched-threshold?
 matched-threshold?
-1
+0
 1
 -1000
 
 SLIDER
-22
-601
-206
-634
+18
+667
+202
+700
 benefit-of-inertia
 benefit-of-inertia
 0
 1
-0.2
+0.21
 0.01
 1
 NIL
 HORIZONTAL
 
 CHOOSER
-23
-441
-226
-486
+20
+480
+207
+525
 seed-selection-algorithm
 seed-selection-algorithm
 "ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
-14
+6
 
 SLIDER
-20
-712
-207
-745
+15
+860
+202
+893
 rand-seed-resource
 rand-seed-resource
 0
@@ -493,10 +499,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-21
-753
-207
-786
+16
+902
+202
+935
 rand-seed-threshold
 rand-seed-threshold
 0
@@ -508,20 +514,20 @@ NIL
 HORIZONTAL
 
 CHOOSER
-23
-386
-206
-431
+20
+429
+203
+474
 seed-distribution
 seed-distribution
 "uniform" "proportional to cost" "inversely proportional to cost" "highest cost behavior only" "lowest cost behavior only" "in ratio"
 0
 
 INPUTBOX
-258
-403
-432
-463
+222
+426
+396
+486
 final-ratio
 [3 2 1]
 1
@@ -529,10 +535,10 @@ final-ratio
 String
 
 SLIDER
-258
-482
-434
-515
+222
+499
+398
+532
 num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
@@ -544,10 +550,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-259
-542
-431
-575
+219
+82
+391
+115
 max-step
 max-step
 0
@@ -559,10 +565,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-248
-119
-446
-152
+1599
+110
+1797
+143
 num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
@@ -574,10 +580,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-301
-162
-390
-195
+1602
+33
+1691
+66
 NIL
 go-bspace\n
 NIL
@@ -591,10 +597,10 @@ NIL
 1
 
 BUTTON
-403
-49
-483
-82
+1604
+70
+1684
+103
 run-expt
 setup\ngo-bspace\nshow seed-selection-algorithm\nshow total-part-mean\nshow total-part-sd\nshow total-adopt-mean\nshow total-adopt-sd\nshow act-counts-mean\nshow act-counts-sd\nshow util-mean\nshow util-sd
 NIL
@@ -606,6 +612,136 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+17
+773
+204
+806
+rand-seed-seed-sel
+rand-seed-seed-sel
+0
+10000
+2857
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+815
+202
+848
+rand-seed-edge-weight
+rand-seed-edge-weight
+0
+10000
+3547
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+219
+129
+392
+162
+num-runs
+num-runs
+0
+100
+0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+25
+252
+198
+285
+proportional-util?
+proportional-util?
+1
+1
+-1000
+
+CHOOSER
+18
+585
+203
+630
+influence-weight
+influence-weight
+"uniform" "random"
+0
+
+PLOT
+456
+339
+859
+539
+threshold estimation accuracy
+time
+deviation
+0.0
+10.0
+0.0
+1.0
+true
+true
+"" ""
+PENS
+"threshold-max-abs-dev" 1.0 0 -16777216 true "" "plot thresh-max-abs-dev"
+"threshold-av-abs-dev" 1.0 0 -13791810 true "" "plot thresh-av-abs-dev"
+"threshold-mse" 1.0 0 -2674135 true "" "plot thresh-mse"
+
+MONITOR
+737
+558
+856
+603
+NIL
+thresh-mse
+17
+1
+11
+
+MONITOR
+597
+556
+715
+601
+NIL
+thresh-av-abs-dev
+17
+1
+11
+
+MONITOR
+456
+555
+583
+600
+NIL
+thresh-max-abs-dev
+17
+1
+11
+
+MONITOR
+234
+188
+302
+234
+NIL
+run-count
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
