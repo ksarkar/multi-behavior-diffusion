@@ -64,6 +64,7 @@ to propagate-influence
   ]
 end
 
+
 ;; link procedure; influencer influences the other end of the link; link procedure
 to influence [influencer behav-id]
   ifelse end1 = influencer [

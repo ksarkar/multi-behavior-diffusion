@@ -4,12 +4,23 @@ turtles-own [
   theta-min     ;; lower bound for theta estimate
   theta-max     ;; upper bound for theta estimate
   last-weight-sums  ;; stores the weight-sum of the last but one tick
+  theta-estimated?  ;; will be set true if theta is estimated; o.w. false
+  
+  r-min
+  r-max
+  r-estimated?
 ]
 
-;; setup estimate variables for each turtle
+;;;;;;;;;;;;;;;; setup code;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; setup estimate variables for each turtle; will be called at generic setup
 to setup-estimates
   ask turtles [
     setup-theta
+    setup-theta-estimated?
+    
+    setup-r
+    setup-r-estimated?
   ]
 end
 
@@ -19,70 +30,210 @@ to setup-theta
   set theta-max 1.0
 end
 
+;; turtle procedure to setup theta-estimated?
+to setup-theta-estimated?
+  set theta-estimated? false
+end
+
+;; turtle procedure
+to setup-r
+  set r-min 0.0
+  set r-max 1.0
+end
+
+;; turtle procedure
+to setup-r-estimated?
+  set r-estimated? false
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; updates estimates after each tick
 to update-estimates
   ask turtles [
     estimate-threshold
+    estimate-resource
   ]
 end
 
 ;;;;;;;;;;Threshold Estimation;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; turtle procedure
 to estimate-threshold
   foreach behav-id-list [
     if (not array:item seeds? ?) and (array:item actives? ?) [
       set theta-max min list theta-max (array:item weight-sums ?)
       set theta-min max list theta-min (array:item last-weight-sums ?)
-      array:set seeds? ? true
+      array:set seeds? ? true   ;; to ensure that we check only the first activation
+      set theta-estimated? true 
     ]
   ]
 end
 
+;;;;;; Resource estimation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; turtle procedure
+to estimate-resource
+  if active? [
+    let r-min-est sum (map [array:item costs ?] (filter [array:item actives? ?] behav-id-list))
+    set r-min max list r-min r-min-est
+    
+    let considered? map [array:item weight-sums ? >= array:item thresholds ?] behav-id-list
+    let rejected-behav-cost-list (map [array:item costs ?] (filter [(item ? considered?) and (not array:item actives? ?)] behav-id-list))
+    let least-cost 1.0
+    if not empty? rejected-behav-cost-list [
+      set least-cost min rejected-behav-cost-list
+    ]
+    set r-max min list r-max (r-min-est + least-cost)
+    
+    set r-estimated? true
+  ]
+end
 
 ;;;;;;;;;;Estimate Accuracy Statistics;;;;;;;;;;;;;;;;;;;;;;;;;
 
+globals [
+  ;thresh-max-abs-dev
+  ;thresh-av-abs-dev
+  ;thresh-mse
+  
+  estimated-frac-thresh
+  best-estimated-frac-thresh
+  average-goodness-overall-thresh
+  average-goodness-estimated-thresh
+  av-abs-dev-overall-thresh
+  av-abs-dev-est-thresh
+  
+  estimated-frac-resource
+  av-abs-dev-overall-res
+  av-abs-dev-est-res
+]
+
+;; updates estimate statistics after each run of the cascade
 to update-est-stats
   reset-est-stats-counters
+  update-stats-one-go
   ask turtles [
-    update-threshold-stats
+    update-est-stats-counters
   ]
   finalize-est-stats
 end
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 to reset-est-stats-counters
   reset-threshold-stats
+  reset-res-stats
+end
+
+to update-stats-one-go
+  set estimated-frac-thresh (count turtles with [theta-estimated?]) / (count turtles)
+  set estimated-frac-resource (count turtles with [r-estimated?]) / (count turtles)
+end
+  
+to update-est-stats-counters
+  update-threshold-stats
+  update-res-stats
 end
 
 to finalize-est-stats
   finalize-thresh-stats
+  finalize-res-stats
 end
 
-;;;;;;;;Threshold stats;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-globals [
-  thresh-max-abs-dev
-  thresh-av-abs-dev
-  thresh-mse
-]
+;;;;;;;;Threshold estimate stats;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to reset-threshold-stats
-  set thresh-max-abs-dev 0
-  set thresh-av-abs-dev 0
-  set thresh-mse 0
+  ;set thresh-max-abs-dev 0
+  ;set thresh-av-abs-dev 0
+  ;set thresh-mse 0
+  
+  set estimated-frac-thresh 0
+  set best-estimated-frac-thresh 0
+  set average-goodness-overall-thresh 0
+  set average-goodness-estimated-thresh 0
+  set av-abs-dev-overall-thresh 0
+  set av-abs-dev-est-thresh 0
 end
 
 ;; turtle procedure
 to update-threshold-stats
   let theta-est (theta-max + theta-min) / 2
   
-  set thresh-max-abs-dev max (list thresh-max-abs-dev (abs (array:item thresholds 0 - theta-est)))
-  set thresh-av-abs-dev thresh-av-abs-dev + (abs (array:item thresholds 0 - theta-est)) 
-  set thresh-mse thresh-mse + ((array:item thresholds 0) - theta-est) ^ 2
+  ;set thresh-max-abs-dev max (list thresh-max-abs-dev (abs (array:item thresholds 0 - theta-est)))
+  ;set thresh-av-abs-dev thresh-av-abs-dev + (abs (array:item thresholds 0 - theta-est)) 
+  ;set thresh-mse thresh-mse + ((array:item thresholds 0) - theta-est) ^ 2
+  
+  let accuracy (theta-max - theta-min) * (count my-links)
+  
+  if accuracy <= 1.0001 [
+    set best-estimated-frac-thresh best-estimated-frac-thresh + 1
+  ]
+  
+  set average-goodness-overall-thresh average-goodness-overall-thresh + accuracy  
+  if theta-estimated? [
+    set average-goodness-estimated-thresh average-goodness-estimated-thresh + accuracy
+  ]  
+
+  set av-abs-dev-overall-thresh av-abs-dev-overall-thresh + (abs (array:item thresholds 0 - theta-est)) 
+  
+  if theta-estimated? [
+    set av-abs-dev-est-thresh av-abs-dev-est-thresh + (abs (array:item thresholds 0 - theta-est)) 
+  ]
+  
 end
 
 to finalize-thresh-stats
-  set thresh-av-abs-dev thresh-av-abs-dev / count turtles
-  set thresh-mse thresh-mse / count turtles
-end 
+  ;set thresh-av-abs-dev thresh-av-abs-dev / count turtles
+  ;set thresh-mse thresh-mse / count turtles
   
+  set average-goodness-overall-thresh average-goodness-overall-thresh / (count turtles)
+  
+  set av-abs-dev-overall-thresh av-abs-dev-overall-thresh / (count turtles)
+  
+  let count-estimated count turtles with [theta-estimated?]
+  ifelse count-estimated > 0 [
+    set average-goodness-estimated-thresh average-goodness-estimated-thresh / count-estimated
+    set av-abs-dev-est-thresh av-abs-dev-est-thresh / count-estimated
+  ]
+  [
+    set average-goodness-estimated-thresh average-goodness-overall-thresh
+    set av-abs-dev-est-thresh av-abs-dev-overall-thresh
+  ]
+  
+  set best-estimated-frac-thresh best-estimated-frac-thresh / (count turtles)
+end 
+
+;;;;;;; Resource Estimation Stats ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to reset-res-stats
+  set av-abs-dev-overall-res 0
+  set av-abs-dev-est-res 0
+end
+ 
+to update-res-stats
+  let r-est (r-min + r-max) / 2
+  
+  set av-abs-dev-overall-res av-abs-dev-overall-res + (abs (resource - r-est)) 
+  
+  if r-estimated? [
+    set av-abs-dev-est-res av-abs-dev-est-res + (abs (resource - r-est))
+  ]
+end
+
+to finalize-res-stats
+  set av-abs-dev-overall-res av-abs-dev-overall-res / (count turtles)
+  
+  let count-estimated count turtles with [r-estimated?]
+  ifelse count-estimated > 0 [
+    set av-abs-dev-est-res av-abs-dev-est-res / count-estimated
+  ]
+  [
+    set av-abs-dev-est-res av-abs-dev-overall-res
+  ]
+end
+  
+
+
+
   

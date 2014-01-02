@@ -92,7 +92,7 @@ __includes [
   ;; simulation count variables
   "simulation_count_vars.nls"
   
-   ;; code for running the diffusion model multiple times
+  ;; code for running the diffusion model multiple times
   "multiple_run.nls"
   
   ;; code for data mining
@@ -100,13 +100,13 @@ __includes [
 ]    
 @#$#@#$#@
 GRAPHICS-WINDOW
-917
-21
-1580
-705
+912
+19
+1498
+628
 20
 20
-15.93
+12.61
 1
 10
 1
@@ -150,7 +150,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-10
+19
 1
 1
 NIL
@@ -165,7 +165,7 @@ rand-seed-network
 rand-seed-network
 1
 10000
-1996
+1997
 1
 1
 NIL
@@ -221,10 +221,10 @@ NIL
 1
 
 MONITOR
-1602
-252
-1674
-298
+656
+174
+754
+220
 total-active-count
 total-active-count
 17
@@ -247,10 +247,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1602
-312
-1676
-358
+759
+174
+896
+220
 NIL
 total-unique-active-count
 17
@@ -258,10 +258,10 @@ total-unique-active-count
 11
 
 MONITOR
-1602
-372
-1675
-418
+430
+310
+503
+355
 NIL
 utilization
 5
@@ -435,11 +435,11 @@ CHOOSER
 24
 484
 204
-530
+529
 seed-selection-algorithm
 seed-selection-algorithm
-"ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
-6
+"ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "randomly-with-random-tie-breaking-available-resource" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
+7
 
 SLIDER
 16
@@ -465,7 +465,7 @@ rand-seed-threshold
 rand-seed-threshold
 0
 10000
-4937
+4939
 1
 1
 NIL
@@ -494,9 +494,9 @@ String
 
 SLIDER
 227
-470
+469
 413
-503
+502
 num-sim-for-spread-based-seed-selection
 num-sim-for-spread-based-seed-selection
 1
@@ -575,10 +575,10 @@ SWITCH
 25
 248
 197
-282
+281
 proportional-util?
 proportional-util?
-1
+0
 1
 -1000
 
@@ -586,7 +586,7 @@ CHOOSER
 22
 603
 208
-649
+648
 influence-weight
 influence-weight
 "uniform" "random"
@@ -596,7 +596,7 @@ SLIDER
 17
 798
 204
-832
+831
 rand-seed-seed-sel
 rand-seed-seed-sel
 1
@@ -611,7 +611,7 @@ SLIDER
 16
 834
 203
-868
+867
 rand-seed-edge-weight
 rand-seed-edge-weight
 1
@@ -626,7 +626,7 @@ SLIDER
 216
 122
 404
-156
+155
 num-runs
 num-runs
 0
@@ -638,13 +638,13 @@ NIL
 HORIZONTAL
 
 PLOT
-436
-343
-896
-566
-threshold estimate accuracy
-time
-deviation
+437
+359
+897
+567
+fraction estimated
+num-runs
+metrics
 0.0
 10.0
 0.0
@@ -653,40 +653,40 @@ true
 true
 "" ""
 PENS
-"thresh-max-abs-dev" 1.0 0 -16777216 true "" "plotxy run-count thresh-max-abs-dev"
-"thresh-av-abs-dev" 1.0 0 -13791810 true "" "plotxy run-count thresh-av-abs-dev"
-"thresh-mse" 1.0 0 -2674135 true "" "plotxy run-count thresh-mse"
+"theta-estimated-frac" 1.0 0 -955883 true "" "plotxy run-count estimated-frac-thresh"
+"theta-best-estimated-frac" 1.0 0 -2674135 true "" "plotxy run-count best-estimated-frac-thresh"
+"r-estimated-frac" 1.0 0 -13791810 true "" "plotxy run-count estimated-frac-resource"
 
 MONITOR
-762
-576
-891
+260
+818
+459
+864
+NIL
+average-goodness-overall-thresh
+2
+1
+11
+
+MONITOR
+435
+577
+577
 622
 NIL
-thresh-mse
-17
+estimated-frac-thresh
+3
 1
 11
 
 MONITOR
-437
-578
-579
-624
-NIL
-thresh-max-abs-dev
-17
-1
-11
-
-MONITOR
-605
+585
 577
-731
+749
 623
 NIL
-thresh-av-abs-dev
-17
+best-estimated-frac-thresh
+3
 1
 11
 
@@ -694,10 +694,116 @@ MONITOR
 217
 165
 285
-211
+210
 NIL
 run-count
 17
+1
+11
+
+MONITOR
+465
+817
+682
+863
+NIL
+average-goodness-estimated-thresh
+2
+1
+11
+
+PLOT
+260
+640
+717
+810
+Goodness of threshold estimation
+num-runs
+goodness
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"average overall goodness" 1.0 0 -5298144 true "" "plotxy run-count average-goodness-overall-thresh"
+"average goodness of estimated" 1.0 0 -14454117 true "" "plotxy run-count average-goodness-estimated-thresh"
+
+MONITOR
+753
+578
+901
+624
+NIL
+estimated-frac-resource
+3
+1
+11
+
+PLOT
+807
+639
+1251
+803
+average absolute deviation
+num-runs
+average absolute deviation
+0.0
+10.0
+0.0
+0.5
+true
+true
+"" ""
+PENS
+"av-abs-dev-overall-theta" 1.0 0 -955883 true "" "plotxy run-count av-abs-dev-overall-thresh"
+"av-abs-dev-est-theta" 1.0 0 -2674135 true "" "plotxy run-count av-abs-dev-est-thresh"
+"av-abs-dev-overall-resource" 1.0 0 -13791810 true "" "plotxy run-count av-abs-dev-overall-res"
+"av-abs-dev-est-resource" 1.0 0 -13345367 true "" "plotxy run-count av-abs-dev-est-res"
+
+MONITOR
+807
+816
+952
+862
+NIL
+av-abs-dev-overall-thresh
+3
+1
+11
+
+MONITOR
+956
+817
+1080
+863
+NIL
+av-abs-dev-est-thresh
+3
+1
+11
+
+MONITOR
+1085
+817
+1213
+863
+NIL
+av-abs-dev-overall-res
+3
+1
+11
+
+MONITOR
+1217
+818
+1337
+864
+NIL
+av-abs-dev-est-res
+3
 1
 11
 

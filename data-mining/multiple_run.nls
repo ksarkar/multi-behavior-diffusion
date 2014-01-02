@@ -21,6 +21,7 @@ to go
   
   set rand-seed-sel rand-seed-sel + 1
   set run-count run-count + 1
+  update-est-stats
 end
 
 to setup-new-seeds [rand-seed]
@@ -52,7 +53,7 @@ to run-one-tick
   
   ;; data mining
   update-estimates
-  update-est-stats
+  ;update-est-stats
   
   set-last-weight-sums
   

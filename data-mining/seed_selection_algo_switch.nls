@@ -45,6 +45,9 @@ to select-seeds
   ifelse seed-selection-algorithm = "randomly-with-random-tie-breaking"[
     randomly-with-random-tie-breaking
   ][
+  ifelse seed-selection-algorithm = "randomly-with-random-tie-breaking-available-resource"[
+    randomly-with-random-tie-breaking-available-resource
+  ][
   ifelse seed-selection-algorithm = "naive-degree-ranked-with-knapsack-assignment" [
     naive-degree-ranked-with-knapsack-assignment
   ][
@@ -97,5 +100,5 @@ to select-seeds
     ideal-all-agent-adoption-without-network-effect
   ][
   user-message "Specify the seed selection algorithm"
-  ]]]]]]]]]]]]]]]]]]]]]]]
+  ]]]]]]]]]]]]]]]]]]]]]]]]
 end
