@@ -102,8 +102,8 @@ __includes [
 GRAPHICS-WINDOW
 912
 19
-1498
-628
+1439
+567
 20
 20
 12.61
@@ -150,7 +150,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-19
+10
 1
 1
 NIL
@@ -165,7 +165,7 @@ rand-seed-network
 rand-seed-network
 1
 10000
-1997
+2989
 1
 1
 NIL
@@ -224,7 +224,7 @@ MONITOR
 656
 174
 754
-220
+219
 total-active-count
 total-active-count
 17
@@ -250,7 +250,7 @@ MONITOR
 759
 174
 896
-220
+219
 NIL
 total-unique-active-count
 17
@@ -531,7 +531,7 @@ num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
 10000
-5000
+1000
 1
 1
 NIL
@@ -661,7 +661,7 @@ MONITOR
 260
 818
 459
-864
+863
 NIL
 average-goodness-overall-thresh
 2
@@ -683,7 +683,7 @@ MONITOR
 585
 577
 749
-623
+622
 NIL
 best-estimated-frac-thresh
 3
@@ -705,7 +705,7 @@ MONITOR
 465
 817
 682
-863
+862
 NIL
 average-goodness-estimated-thresh
 2
@@ -735,7 +735,7 @@ MONITOR
 753
 578
 901
-624
+623
 NIL
 estimated-frac-resource
 3
@@ -767,7 +767,7 @@ MONITOR
 807
 816
 952
-862
+861
 NIL
 av-abs-dev-overall-thresh
 3
@@ -778,7 +778,7 @@ MONITOR
 956
 817
 1080
-863
+862
 NIL
 av-abs-dev-est-thresh
 3
@@ -789,7 +789,7 @@ MONITOR
 1085
 817
 1213
-863
+862
 NIL
 av-abs-dev-overall-res
 3
@@ -800,7 +800,7 @@ MONITOR
 1217
 818
 1337
-864
+863
 NIL
 av-abs-dev-est-res
 3
@@ -2307,6 +2307,91 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-behaviors">
       <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="th-r-nav" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>estimated-frac-thresh</metric>
+    <metric>best-estimated-frac-thresh</metric>
+    <metric>estimated-frac-resource</metric>
+    <metric>average-goodness-overall-thresh</metric>
+    <metric>average-goodness-estimated-thresh</metric>
+    <metric>av-abs-dev-overall-thresh</metric>
+    <metric>av-abs-dev-est-thresh</metric>
+    <metric>av-abs-dev-overall-res</metric>
+    <metric>av-abs-dev-est-res</metric>
+    <metric>count turtles with [theta-min &gt; array:item thresholds 0]</metric>
+    <metric>count turtles with [theta-max &lt; array:item thresholds 0]</metric>
+    <metric>count turtles with [r-min &gt; resource]</metric>
+    <metric>count turtles with [r-max &lt; resource]</metric>
+    <enumeratedValueSet variable="rand-seed-edge-weight">
+      <value value="6436"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="proportional-util?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4939"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1997" step="1" last="2996"/>
+    <enumeratedValueSet variable="average-node-degree">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="influence-weight">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-seed-sel">
+      <value value="1496"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[1 3 2]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;randomly-with-random-tie-breaking-available-resource&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-runs">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="switching-cost?">
       <value value="false"/>

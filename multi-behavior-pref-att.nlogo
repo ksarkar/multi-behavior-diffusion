@@ -136,12 +136,6 @@ __includes [
   
   ;; simulation count variables
   "simulation_count_vars.nls"
-  
-  ;; code for running the diffusion model multiple times
-  "multiple_run.nls"
-  
-  ;; code for data mining
-  "data_mining.nls"
 ]    
     
   
@@ -149,8 +143,8 @@ __includes [
 GRAPHICS-WINDOW
 974
 12
-1591
-652
+1529
+588
 20
 20
 13.3
@@ -282,7 +276,7 @@ MONITOR
 750
 160
 886
-206
+205
 NIL
 total-unique-active-count
 17
@@ -543,7 +537,7 @@ SLIDER
 240
 59
 393
-93
+92
 max-step
 max-step
 0
@@ -555,10 +549,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1648
-72
-1856
-105
+206
+108
+414
+141
 num-samples-for-spread-estimation
 num-samples-for-spread-estimation
 1
@@ -570,10 +564,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-1647
-116
-1736
-149
+205
+152
+294
+185
 NIL
 go-bspace
 NIL
@@ -587,10 +581,10 @@ NIL
 1
 
 MONITOR
-1650
-162
-1740
-207
+208
+198
+298
+243
 NIL
 total-part-mean
 2
@@ -598,10 +592,10 @@ total-part-mean
 11
 
 MONITOR
-1752
-162
-1835
-207
+310
+198
+393
+243
 NIL
 total-part-sd
 2
@@ -609,10 +603,10 @@ total-part-sd
 11
 
 BUTTON
-1748
-115
-1828
-148
+306
+151
+386
+184
 run-expt
 setup\ngo-bspace\nshow seed-selection-algorithm\nshow total-part-mean\nshow total-part-sd\nshow total-adopt-mean\nshow total-adopt-sd\nshow act-counts-mean\nshow act-counts-sd\nshow util-mean\nshow util-sd
 NIL
@@ -626,10 +620,10 @@ NIL
 1
 
 MONITOR
-1650
-275
-1742
-320
+208
+311
+300
+356
 NIL
 util-mean
 2
@@ -637,10 +631,10 @@ util-mean
 11
 
 MONITOR
-1650
-219
-1742
-264
+208
+255
+300
+300
 NIL
 total-adopt-mean
 2
@@ -648,10 +642,10 @@ total-adopt-mean
 11
 
 MONITOR
-1752
-219
-1845
-264
+310
+255
+403
+300
 NIL
 total-adopt-sd
 2
@@ -659,10 +653,10 @@ total-adopt-sd
 11
 
 MONITOR
-1752
-276
-1809
-321
+310
+312
+367
+357
 NIL
 util-sd
 2
@@ -680,196 +674,11 @@ proportional-util?
 1
 -1000
 
-SLIDER
-240
-105
-392
-139
-num-runs
-num-runs
-0
-100
-50
-1
-1
-NIL
-HORIZONTAL
-
-MONITOR
-240
-152
-308
-198
-NIL
-run-count
-3
-1
-11
-
-PLOT
-485
-379
-932
-584
-fraction estimated
-num-runs
-metrics
-0.0
-10.0
-0.0
-1.0
-true
-true
-"" ""
-PENS
-"theta-estimated-frac" 1.0 0 -955883 true "" "plotxy run-count estimated-frac-thresh"
-"theta-best-estimated-frac" 1.0 0 -2674135 true "" "plotxy run-count best-estimated-frac-thresh"
-"r-estimated-frac" 1.0 0 -13791810 true "" "plotxy run-count estimated-frac-resource"
-
-MONITOR
-486
-603
-621
-649
-NIL
-estimated-frac-thresh
-3
-1
-11
-
-MONITOR
-626
-604
-790
-650
-NIL
-best-estimated-frac-thresh
-3
-1
-11
-
-MONITOR
-796
-605
-944
-651
-NIL
-estimated-frac-resource
-3
-1
-11
-
-PLOT
-227
-663
-702
-838
-goodness of threshold estimation
-num-runs
-goodness
-0.0
-10.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"average-overall-goodness" 1.0 0 -2674135 true "" "plotxy run-count average-goodness-overall-thresh"
-"average goodness of estimated" 1.0 0 -13791810 true "" "plotxy run-count average-goodness-estimated-thresh"
-
-MONITOR
-227
-845
-426
-891
-NIL
-average-goodness-overall-thresh
-3
-1
-11
-
-MONITOR
-436
-844
-653
-890
-NIL
-average-goodness-estimated-thresh
-3
-1
-11
-
-PLOT
-738
-664
-1196
-836
-average absolute deviation
-num-runs
-avg abs deviation
-0.0
-10.0
-0.0
-0.5
-true
-true
-"" ""
-PENS
-"av-abs-dev-overall-theta" 1.0 0 -955883 true "" "plotxy run-count av-abs-dev-overall-thresh"
-"av-abs-dev-est-theta" 1.0 0 -2674135 true "" "plotxy run-count av-abs-dev-est-thresh"
-"av-abs-dev-overall-resource" 1.0 0 -13791810 true "" "plotxy run-count av-abs-dev-overall-res"
-"av-abs-dev-est-resource" 1.0 0 -13345367 true "" "plotxy run-count av-abs-dev-est-res"
-
-MONITOR
-738
-842
-881
-888
-NIL
-av-abs-dev-overall-thresh
-3
-1
-11
-
-MONITOR
-886
-842
-1009
-888
-NIL
-av-abs-dev-est-thresh
-3
-1
-11
-
-MONITOR
-1014
-843
-1141
-889
-NIL
-av-abs-dev-overall-res
-3
-1
-11
-
-MONITOR
-1145
-842
-1265
-888
-NIL
-av-abs-dev-est-res
-3
-1
-11
-
 CHOOSER
 22
 544
 208
-590
+589
 influence-weight
 influence-weight
 "uniform" "random"
@@ -879,7 +688,7 @@ SLIDER
 22
 819
 209
-853
+852
 rand-seed-seed-sel
 rand-seed-seed-sel
 1
@@ -894,7 +703,7 @@ SLIDER
 22
 858
 209
-892
+891
 rand-seed-edge-weight
 rand-seed-edge-weight
 1

@@ -228,7 +228,7 @@ rand-seed-network
 rand-seed-network
 1
 10000
-2164
+3163
 1
 1
 NIL
@@ -376,7 +376,7 @@ INPUTBOX
 198
 242
 behavior-costs
-[0.9 0.9 0.9]
+[0.2 0.5 0.7]
 1
 0
 String
@@ -705,7 +705,7 @@ num-runs
 num-runs
 0
 100
-0
+100
 1
 1
 NIL
@@ -925,12 +925,12 @@ SLIDER
 25
 77
 198
-111
+110
 number-of-edges
 number-of-edges
 1
 number-of-nodes - 1
-1
+2
 1
 1
 NIL
@@ -2335,6 +2335,165 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="benefit-of-inertia">
       <value value="0.2"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>count turtles</metric>
+    <enumeratedValueSet variable="num-runs">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-network">
+      <value value="2164"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="influence-weight">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="proportional-util?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-edges">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.9 0.9 0.9]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;randomly-with-random-tie-breaking-available-resource&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-edge-weight">
+      <value value="3645"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-seed-sel">
+      <value value="1756"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="1-1-th-r-nav" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>estimated-frac-thresh</metric>
+    <metric>best-estimated-frac-thresh</metric>
+    <metric>estimated-frac-resource</metric>
+    <metric>average-goodness-overall-thresh</metric>
+    <metric>average-goodness-estimated-thresh</metric>
+    <metric>av-abs-dev-overall-thresh</metric>
+    <metric>av-abs-dev-est-thresh</metric>
+    <metric>av-abs-dev-overall-res</metric>
+    <metric>av-abs-dev-est-res</metric>
+    <metric>count turtles with [theta-min &gt; array:item thresholds 0]</metric>
+    <metric>count turtles with [theta-max &lt; array:item thresholds 0]</metric>
+    <metric>count turtles with [r-min &gt; resource]</metric>
+    <metric>count turtles with [r-max &lt; resource]</metric>
+    <enumeratedValueSet variable="num-runs">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="2164" step="1" last="3163"/>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4937"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="influence-weight">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="proportional-util?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-edges">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;randomly-with-random-tie-breaking-available-resource&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-edge-weight">
+      <value value="3645"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-seed-sel">
+      <value value="1756"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>

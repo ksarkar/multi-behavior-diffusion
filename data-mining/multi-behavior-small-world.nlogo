@@ -144,8 +144,8 @@ __includes [
 GRAPHICS-WINDOW
 990
 12
-1625
-670
+1561
+604
 20
 20
 13.7
@@ -177,7 +177,7 @@ number-of-nodes
 number-of-nodes
 1
 2000
-500
+100
 1
 1
 NIL
@@ -192,7 +192,7 @@ total-num-seeds
 total-num-seeds
 1
 number-of-nodes
-51
+10
 1
 1
 NIL
@@ -207,7 +207,7 @@ rand-seed-network
 rand-seed-network
 1
 10000
-1997
+2993
 1
 1
 NIL
@@ -266,7 +266,7 @@ MONITOR
 679
 177
 782
-223
+222
 total-active-count
 total-active-count
 17
@@ -477,7 +477,7 @@ CHOOSER
 24
 463
 207
-509
+508
 seed-selection-algorithm
 seed-selection-algorithm
 "ideal-all-agent-adoption-without-network-effect" "randomly-unlimited-seed-resource-batched" "randomly-unlimited-seed-resource-incremental" "randomly-with-available-resource-batched" "randomly-with-available-resource-incremental" "randomly-with-knapsack-assignment" "randomly-with-random-tie-breaking" "randomly-with-random-tie-breaking-available-resource" "naive-degree-ranked-with-knapsack-assignment" "naive-degree-ranked-with-random-tie-breaking-no-nudging" "naive-degree-ranked-with-random-tie-breaking-with-nudging" "degree-and-resource-ranked-with-knapsack-tie-breaking" "degree-and-resource-ranked-with-random-tie-breaking" "one-step-spread-ranked-with-random-tie-breaking" "one-step-spread-hill-climbing-with-random-tie-breaking" "IA-S-T" "IA-S-NT" "IA-M-T" "IA-M-NT" "KKT-S-T" "KKT-S-NT" "KKT-M-T" "KKT-M-NT"
@@ -628,7 +628,7 @@ SLIDER
 226
 106
 399
-140
+139
 num-runs
 num-runs
 0
@@ -643,7 +643,7 @@ MONITOR
 228
 148
 296
-194
+193
 NIL
 run-count
 3
@@ -674,7 +674,7 @@ MONITOR
 426
 618
 561
-664
+663
 NIL
 estimated-frac-thresh
 3
@@ -685,7 +685,7 @@ MONITOR
 565
 618
 729
-664
+663
 NIL
 best-estimated-frac-thresh
 3
@@ -696,7 +696,7 @@ MONITOR
 734
 618
 882
-664
+663
 NIL
 estimated-frac-resource
 3
@@ -726,7 +726,7 @@ MONITOR
 242
 847
 441
-893
+892
 NIL
 average-goodness-overall-thresh
 3
@@ -737,7 +737,7 @@ MONITOR
 446
 847
 663
-893
+892
 NIL
 average-goodness-estimated-thresh
 3
@@ -769,7 +769,7 @@ MONITOR
 757
 847
 904
-893
+892
 NIL
 av-abs-dev-overall-thresh
 3
@@ -780,7 +780,7 @@ MONITOR
 909
 847
 1035
-893
+892
 NIL
 av-abs-dev-est-thresh
 3
@@ -791,7 +791,7 @@ MONITOR
 1042
 847
 1171
-893
+892
 NIL
 av-abs-dev-overall-res
 3
@@ -802,7 +802,7 @@ MONITOR
 1176
 847
 1285
-893
+892
 NIL
 av-abs-dev-est-res
 3
@@ -813,7 +813,7 @@ CHOOSER
 23
 582
 208
-628
+627
 influence-weight
 influence-weight
 "uniform" "random"
@@ -823,7 +823,7 @@ SLIDER
 24
 848
 211
-882
+881
 rand-seed-seed-sel
 rand-seed-seed-sel
 1
@@ -838,7 +838,7 @@ SLIDER
 24
 886
 211
-920
+919
 rand-seed-edge-weight
 rand-seed-edge-weight
 1
@@ -2527,6 +2527,91 @@ NetLogo 5.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-samples-for-spread-estimation">
       <value value="5000"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="th-r-nav" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100"/>
+    <metric>estimated-frac-thresh</metric>
+    <metric>best-estimated-frac-thresh</metric>
+    <metric>estimated-frac-resource</metric>
+    <metric>average-goodness-overall-thresh</metric>
+    <metric>average-goodness-estimated-thresh</metric>
+    <metric>av-abs-dev-overall-thresh</metric>
+    <metric>av-abs-dev-est-thresh</metric>
+    <metric>av-abs-dev-overall-res</metric>
+    <metric>av-abs-dev-est-res</metric>
+    <metric>count turtles with [theta-min &gt; array:item thresholds 0]</metric>
+    <metric>count turtles with [theta-max &lt; array:item thresholds 0]</metric>
+    <metric>count turtles with [r-min &gt; resource]</metric>
+    <metric>count turtles with [r-max &lt; resource]</metric>
+    <enumeratedValueSet variable="behavior-utilities">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-samples-for-spread-estimation">
+      <value value="5000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="final-ratio">
+      <value value="&quot;[3 2 1]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="matched-threshold?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rewiring-probability">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-resource">
+      <value value="3852"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-threshold">
+      <value value="4938"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-distribution">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="switching-cost?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-runs">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-seed-sel">
+      <value value="4756"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-nodes">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="behavior-costs">
+      <value value="&quot;[0.2 0.5 0.7]&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="seed-selection-algorithm">
+      <value value="&quot;randomly-with-random-tie-breaking-available-resource&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-step">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-num-seeds">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-behaviors">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rand-seed-edge-weight">
+      <value value="7564"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rand-seed-network" first="1997" step="1" last="2996"/>
+    <enumeratedValueSet variable="benefit-of-inertia">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="proportional-util?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="influence-weight">
+      <value value="&quot;uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sim-for-spread-based-seed-selection">
+      <value value="200"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
